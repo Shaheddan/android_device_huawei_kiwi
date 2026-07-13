@@ -2,3 +2,12 @@ allow vendor_init fingerprintd_data_file:dir { create setattr };
 allow vendor_init wifi_data_file:dir create_dir_perms;
 allow vendor_init proc_kernel_sched:file write;
 allow vendor_init proc_printk:file write;
+
+# swappiness write, modem firmware read, fpc data dir check
+allow vendor_init proc:file { open write };
+allow vendor_init firmware_file:file { read open getattr };
+allow vendor_init fingerprintd_data_file:dir getattr;
+
+# firmware dir traversal (earlier rule covered files only) + mmcblk0p8 setattr from init rc
+allow vendor_init firmware_file:dir search;
+allow vendor_init block_device:blk_file setattr;

@@ -29,3 +29,6 @@ r_dir_file(oeminfo, sysfs);
 
 set_prop(oeminfo, hw_version_prop);
 unix_socket_connect(oeminfo, qmuxd, libqmi_oem_main);
+
+# oeminfo_nvm_ser creates oinv under /dev
+allow oeminfo device:dir { write add_name create };

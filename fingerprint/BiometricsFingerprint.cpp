@@ -202,6 +202,15 @@ Return<RequestStatus> BiometricsFingerprint::enumerate()  {
 
     if (ret == 0 && mClientCallback != nullptr) {
         ALOGD("Got %d enumerated templates", n);
+        if (n == 0) {
+            // Android 11: FingerprintService requires an enumeration-complete
+            // callback even when no templates exist, otherwise internal cleanup
+            // never finishes and enroll clients queue forever.
+            const uint64_t devId = reinterpret_cast<uint64_t>(mDevice);
+            if (!mClientCallback->onEnumerate(devId, 0, 0, 0).isOk()) {
+                ALOGE("failed to invoke fingerprint onEnumerate callback");
+            }
+        }
         for (uint32_t i = 0; i < n; i++) {
             const uint64_t devId = reinterpret_cast<uint64_t>(mDevice);
             const auto& fp = results[i];

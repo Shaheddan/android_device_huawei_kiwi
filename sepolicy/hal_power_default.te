@@ -1,1 +1,6 @@
 allow hal_power_default gesture_sysfs:file { getattr open read write };
+
+# AIDL service registration: servicemanager inspects the registrant
+allow servicemanager hal_power_default:dir search;
+allow servicemanager hal_power_default:file { read open };
+allow servicemanager hal_power_default:process getattr;

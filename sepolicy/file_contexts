@@ -33,3 +33,9 @@
 /system/vendor/bin/hw/android\.hardware\.biometrics\.fingerprint@1\.0-service\.kiwi     u:object_r:hal_fingerprint_default_exec:s0
 /system/vendor/bin/hw/android\.hardware\.light@2\.0-service\.kiwi                       u:object_r:hal_light_default_exec:s0
 /system/vendor/bin/hw/vendor\.lineage\.touch@1\.0-service\.kiwi                         u:object_r:hal_lineage_touch_kiwi_exec:s0
+
+# AIDL Power HAL, software Gatekeeper, and PowerStats mock (18.1 services;
+# labels absent from platform and sepolicy-legacy — added per Motorola msm8916 18.1 pattern)
+/(vendor|system/vendor)/bin/hw/android\.hardware\.gatekeeper@1\.0-service\.software    u:object_r:hal_gatekeeper_default_exec:s0
+/(vendor|system/vendor)/bin/hw/android\.hardware\.power\.stats@1\.0-service\.mock      u:object_r:hal_power_stats_default_exec:s0
+/(vendor|system/vendor)/bin/hw/android\.hardware\.drm@1\.3-service\.clearkey    u:object_r:hal_drm_default_exec:s0

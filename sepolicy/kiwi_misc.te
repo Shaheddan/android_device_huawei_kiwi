@@ -1,0 +1,13 @@
+# Misc denials from 2026-07-12 permissive harvest
+get_prop(zygote, bluetooth_prop)
+get_prop(zygote, exported_camera_prop)
+get_prop(system_server, userspace_reboot_config_prop)
+get_prop(system_server, userspace_reboot_exported_prop)
+get_prop(bootanim, userspace_reboot_exported_prop)
+allow init sysfs_leds:lnk_file read;
+allow vold sysfs_mmc_host:file { open write };
+allow fsck_untrusted sysfs:file { read open getattr };
+allow system_app sysfs_zram:dir search;
+allow system_app sysfs_zram:file { read open getattr };
+allow system_app proc_pagetypeinfo:file { read open getattr };
+get_prop(system_server, exported_camera_prop)

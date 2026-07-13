@@ -1,0 +1,4 @@
+
+# fpc TZ template storage: qseecomd traverses /data root at end_enrol
+# (2026-07-13 harvest; this was the final fingerprint-enrollment blocker)
+allow tee system_data_root_file:dir { read open search };

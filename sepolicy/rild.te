@@ -6,3 +6,6 @@ dontaudit rild system_file:file execute_no_trans;
 
 # Another one - but this time no clue what it wants to execute
 dontaudit rild shell_exec:file execute;
+
+# rild executes /system/bin/sh for legacy qcom data scripts
+allow rild shell_exec:file { read open getattr execute execute_no_trans };
