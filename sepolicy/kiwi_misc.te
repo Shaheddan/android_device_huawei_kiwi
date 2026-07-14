@@ -11,3 +11,7 @@ allow system_app sysfs_zram:dir search;
 allow system_app sysfs_zram:file { read open getattr };
 allow system_app proc_pagetypeinfo:file { read open getattr };
 get_prop(system_server, exported_camera_prop)
+
+# KiwiParts bypass charging: settings app + init write the charger node
+allow system_app sysfs_bypass_charging:file { read open write getattr };
+allow init sysfs_bypass_charging:file { read open write setattr };

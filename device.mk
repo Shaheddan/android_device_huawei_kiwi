@@ -362,3 +362,7 @@ PRODUCT_COPY_FILES += \
 ifneq ($(QCPATH),)
 PRODUCT_BOOT_JARS += WfdCommon
 endif
+
+# KiwiParts (bypass charging control)
+PRODUCT_PACKAGES += \
+    KiwiParts

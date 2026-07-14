@@ -10,3 +10,4 @@ genfscon proc  /sys/kernel/sched_downmigrate           u:object_r:proc_kernel_sc
 genfscon proc  /sys/kernel/sched_freq_inc_notify       u:object_r:proc_kernel_sched:s0
 genfscon proc  /sys/kernel/sched_freq_dec_notify       u:object_r:proc_kernel_sched:s0
 genfscon proc  /sys/kernel/printk                      u:object_r:proc_printk:s0
+genfscon sysfs /devices/soc.0/78b8000.i2c/i2c-4/4-006b/power_supply/battery/factory_diag u:object_r:sysfs_bypass_charging:s0

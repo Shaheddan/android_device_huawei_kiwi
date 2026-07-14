@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="kiwi_parts_title">Kiwi Parts</string>
+    <string name="bypass_title">Bypass charging</string>
+    <string name="bypass_summary">Power the phone from the charger while holding the battery level</string>
+    <string name="bypass_now_title">Bypass now</string>
+    <string name="bypass_now_summary">Stop charging immediately and run from the charger, holding the current battery level</string>
+    <string name="bypass_auto_title">Auto bypass</string>
+    <string name="bypass_auto_summary">Charge normally up to the level below, then hold there</string>
+    <string name="bypass_threshold_title">Auto bypass level</string>
+</resources>
