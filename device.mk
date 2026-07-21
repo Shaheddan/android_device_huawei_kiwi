@@ -88,7 +88,6 @@ PRODUCT_COPY_FILES += \
 # ANT+
 PRODUCT_PACKAGES += \
     AntHalService \
-    com.dsi.ant.antradio_library \
     libantradio
 
 # APEX
@@ -99,6 +98,7 @@ PRODUCT_COPY_FILES += \
 PRODUCT_PACKAGES += \
     android.hardware.bluetooth@1.0-impl \
     android.hardware.bluetooth@1.0-service \
+    android.hardware.bluetooth@1.0.vendor \
     libbt-vendor \
     init.qcom.bt.sh
 
@@ -108,7 +108,7 @@ PRODUCT_PACKAGES += \
     camera.device@1.0-impl-legacy \
     camera.msm8916 \
     libmm-qcamera \
-    Snap
+    Camera2
 
 # Compatibility
 PRODUCT_PACKAGES += \
@@ -129,7 +129,7 @@ PRODUCT_PACKAGES += \
     memtrack.msm8916
 
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
-    ro.surface_flinger.max_frame_buffer_acquired_buffers=3
+    ro.surface_flinger.max_frame_buffer_acquired_buffers=1
 
 # Doze
 PRODUCT_PACKAGES += \
@@ -139,7 +139,8 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     android.hardware.drm@1.0-impl \
     android.hardware.drm@1.0-service \
-    android.hardware.drm@1.3-service.clearkey
+    android.hardware.drm@1.4-service.clearkey \
+    android.hardware.drm@1.3.vendor
 
 # Encryption
 PRODUCT_PACKAGES += \
@@ -217,8 +218,7 @@ PRODUCT_COPY_FILES += \
 
 # Keymaster
 PRODUCT_PACKAGES += \
-    android.hardware.keymaster@3.0-impl \
-    android.hardware.keymaster@3.0-service
+    android.hardware.keymaster@4.1-service
 
 # Lights
 PRODUCT_PACKAGES += \
@@ -260,10 +260,10 @@ PRODUCT_PACKAGES += \
 
 # Radio
 PRODUCT_PACKAGES += \
-    telephony-ext
-
-PRODUCT_BOOT_JARS += \
-    telephony-ext
+    android.hardware.radio@1.6.vendor \
+    android.hardware.radio.config@1.3.vendor \
+    android.hardware.radio.deprecated@1.0.vendor \
+    android.hardware.secure_element@1.2.vendor
 
 # Ramdisk
 PRODUCT_PACKAGES += \
@@ -366,3 +366,14 @@ endif
 # KiwiParts (bypass charging control)
 PRODUCT_PACKAGES += \
     KiwiParts
+
+# 19.1 additions (ref: Moto msm8916 19.1)
+PRODUCT_PACKAGES += \
+    android.system.net.netd@1.1.vendor
+
+PRODUCT_PACKAGES += \
+    CellBroadcastAppPlatform \
+    CellBroadcastServiceModulePlatform
+
+# Scudo allocator is too heavy for 2-3 GB RAM
+PRODUCT_DISABLE_SCUDO := true

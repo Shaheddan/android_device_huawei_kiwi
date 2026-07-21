@@ -44,6 +44,7 @@ TARGET_KERNEL_SOURCE := kernel/huawei/kiwi
 TARGET_KERNEL_ARCH := arm64
 TARGET_KERNEL_HEADER_ARCH := arm64
 TARGET_KERNEL_CONFIG := kiwi-64_defconfig
+TARGET_KERNEL_CLANG_COMPILE := false
 
 # Audio
 AUDIO_FEATURE_ENABLED_FM_POWER_OPT := true
@@ -227,3 +228,6 @@ TARGET_LD_SHIM_LIBS := \
     /system/vendor/lib64/libdmd.so|libshim_cutils.so:\
     /system/vendor/lib64/libsecure_boot_keybox.so|libshim_cutils.so:\
     /system/vendor/lib64/sensors.kiwi.so|libshim_cutils.so
+
+# 19.1: vendor blobs shipped via PRODUCT_COPY_FILES trip new ELF checks (ref: Moto 19.1)
+BUILD_BROKEN_ELF_PREBUILT_PRODUCT_COPY_FILES := true

@@ -106,7 +106,6 @@ dev.pm.dyn_samplingrate=1
 qemu.hw.mainkeys=0
 ro.board.platform=msm8916
 ro.qcom.ad.sensortype=2
-ro.sf.lcd_density=480
 
 # Perf
 ro.am.reschedule_service=true
@@ -133,7 +132,7 @@ persist.radio.rat_on=combine
 persist.radio.sib16_support=1
 persist.radio.use_nv_force=false
 ril.subscription.types=NV,RUIM
-rild.libpath=/system/vendor/lib64/libril-wrapper.so
+vendor.rild.libpath=/system/vendor/lib64/libril-wrapper.so
 ro.config.AC_optimize_plmn_srch=true
 ro.config.dsds_mode=umts_gsm
 ro.config.eons_always_ap=false
@@ -170,3 +169,8 @@ persist.sys.usb.config.extra=none
 
 # WiFi
 wifi.interface=wlan0
+
+# 19.1 (ref: Moto system_prop.mk)
+debug.renderengine.backend=threaded
+persist.sys.binary_xml=false
+ro.vndk.version=current

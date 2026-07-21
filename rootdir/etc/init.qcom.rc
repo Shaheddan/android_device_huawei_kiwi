@@ -29,9 +29,6 @@ import /vendor/etc/init/hw/init.qcom.usb.rc
 import /vendor/etc/init/hw/init.target.rc
 
 on early-init
-    mount debugfs debugfs /sys/kernel/debug
-    chmod 0755 /sys/kernel/debug
-
     write /sys/devices/system/cpu/cpu2/online 1
     # Allow subsystems to be restarted instead of crashing the system
     # 0=venus, 1=pronto, 2=mms == modem
@@ -40,6 +37,7 @@ on early-init
     write /sys/bus/msm_subsys/devices/subsys2/restart_level related
 
 on init
+    setprop ro.kernel.ebpf.supported false
 
 on post-fs
     # Allow writing to the kernel trace log.
