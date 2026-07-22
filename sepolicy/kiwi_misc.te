@@ -1,5 +1,4 @@
 # Misc denials from 2026-07-12 permissive harvest
-get_prop(zygote, bluetooth_prop)
 get_prop(zygote, exported_camera_prop)
 get_prop(system_server, userspace_reboot_config_prop)
 get_prop(system_server, userspace_reboot_exported_prop)
