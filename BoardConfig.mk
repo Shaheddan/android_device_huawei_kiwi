@@ -159,7 +159,16 @@ TARGET_RIL_VARIANT := caf
 TARGET_USES_OLD_MNC_FORMAT := true
 
 # SELinux
-include device/qcom/sepolicy-legacy/SEPolicy.mk
+include device/qcom/sepolicy-legacy-um/SEPolicy.mk
+
+# msm8916 predates the legacy-um platform filter; register the vendor policy
+# dirs it would have added, using msm8937 as nearest-cousin platform dir
+BOARD_VENDOR_SEPOLICY_DIRS += \
+    device/qcom/sepolicy-legacy-um \
+    device/qcom/sepolicy-legacy-um/legacy/vendor/common/sysmonapp \
+    device/qcom/sepolicy-legacy-um/legacy/vendor/ssg \
+    device/qcom/sepolicy-legacy-um/legacy/vendor/common \
+    device/qcom/sepolicy-legacy-um/legacy/vendor/msm8937
 
 BOARD_VENDOR_SEPOLICY_DIRS += \
     device/huawei/kiwi/sepolicy
