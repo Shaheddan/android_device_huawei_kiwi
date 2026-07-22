@@ -170,6 +170,11 @@ BOARD_VENDOR_SEPOLICY_DIRS += \
     device/qcom/sepolicy-legacy-um/legacy/vendor/common \
     device/qcom/sepolicy-legacy-um/legacy/vendor/msm8937
 
+# test dir holds eng/userdebug-only type definitions referenced by vendor common
+ifneq (,$(filter userdebug eng, $(TARGET_BUILD_VARIANT)))
+BOARD_VENDOR_SEPOLICY_DIRS += device/qcom/sepolicy-legacy-um/legacy/vendor/test
+endif
+
 BOARD_VENDOR_SEPOLICY_DIRS += \
     device/huawei/kiwi/sepolicy
 
