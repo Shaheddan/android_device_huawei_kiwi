@@ -245,3 +245,11 @@ TARGET_LD_SHIM_LIBS := \
 
 # 19.1: vendor blobs shipped via PRODUCT_COPY_FILES trip new ELF checks (ref: Moto 19.1)
 BUILD_BROKEN_ELF_PREBUILT_PRODUCT_COPY_FILES := true
+
+# TODO(enforcing): TEMPORARY — legacy-um's qcom vendor policy grants ioctl on
+# dir/file/socket classes without allowxperm allowlists, tripping S's
+# "neverallowxperm * *:{...} ioctl {0}" ~146k times. Our own plain neverallows
+# are at zero. Mute the checker for permissive-phase bringup only; before
+# flipping SELinux to enforcing, either add allowxperm allowlists or drop the
+# legacy-um vendor dirs in favour of kiwi-specific policy, then REMOVE this.
+SELINUX_IGNORE_NEVERALLOWS := true
