@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dropped from packages/resources/devicesettings between 18.1 and 19.1;
+         kiwi's doze still uses the classic custom switch bar layout. -->
+    <string name="switch_bar_on">On</string>
+    <string name="switch_bar_off">Off</string>
+</resources>
