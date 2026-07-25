@@ -253,3 +253,6 @@ BUILD_BROKEN_ELF_PREBUILT_PRODUCT_COPY_FILES := true
 # flipping SELinux to enforcing, either add allowxperm allowlists or drop the
 # legacy-um vendor dirs in favour of kiwi-specific policy, then REMOVE this.
 SELINUX_IGNORE_NEVERALLOWS := true
+
+# TODO(enforcing): bringup only — remove once denials are harvested and fixed
+BOARD_KERNEL_CMDLINE += androidboot.selinux=permissive
