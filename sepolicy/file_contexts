@@ -48,9 +48,3 @@
 /data/system/perfd(/.*)?                            u:object_r:mpctl_data_file:s0
 /dev/socket/perfd                                   u:object_r:mpctl_socket:s0
 /data/misc/perfd(/.*)?                              u:object_r:mpctl_socket:s0
-
-# Root-level mountpoints. legacy-um relocated these under /vendor because UM
-# devices mount firmware at /vendor/firmware_mnt and persist at
-# /mnt/vendor/persist; kiwi is non-Treble and still mounts them at the root.
-/firmware(/.*)?                     u:object_r:firmware_file:s0
-/persist(/.*)?                      u:object_r:persist_file:s0
