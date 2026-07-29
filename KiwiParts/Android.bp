@@ -6,4 +6,9 @@ android_app {
     platform_apis: true,
     system_ext_specific: false,
     privileged: false,
+    static_libs: [
+        "androidx.preference_preference",
+        "SettingsLibCollapsingToolbarBaseActivity",
+        "SettingsLibSettingsTheme",
+    ],
 }

@@ -1,19 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-    <SwitchPreference
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <androidx.preference.SwitchPreferenceCompat
         android:key="bypass_now"
         android:title="@string/bypass_now_title"
         android:summary="@string/bypass_now_summary"
-        android:defaultValue="false"/>
-    <SwitchPreference
+        android:defaultValue="false" />
+
+    <androidx.preference.SwitchPreferenceCompat
         android:key="bypass_auto"
         android:title="@string/bypass_auto_title"
         android:summary="@string/bypass_auto_summary"
-        android:defaultValue="false"/>
+        android:defaultValue="false" />
+
     <SeekBarPreference
         android:key="bypass_threshold"
         android:title="@string/bypass_threshold_title"
         android:max="100"
-        android:min="10"
-        android:defaultValue="80"/>
+        app:min="10"
+        android:defaultValue="80"
+        app:showSeekBarValue="false"
+        app:updatesContinuously="true" />
+
 </PreferenceScreen>
