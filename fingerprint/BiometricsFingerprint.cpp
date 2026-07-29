@@ -221,6 +221,18 @@ Return<RequestStatus> BiometricsFingerprint::enumerate()  {
         }
     }
 
+    if (ret != 0 && mClientCallback != nullptr) {
+        // Android 12: InternalCleanupClient waits on an enumerate callback and has
+        // no timeout. The vendor library returns 1 when asked to enumerate before
+        // setActiveGroup has run (cleanup is scheduled ahead of
+        // FingerprintUpdateActiveUserClient), which jams the BiometricScheduler
+        // forever. Report the failure so the client finishes and the queue drains.
+        const uint64_t devId = reinterpret_cast<uint64_t>(mDevice);
+        ALOGE("enumerate() failed (%d); notifying framework so cleanup can finish", ret);
+        if (!mClientCallback->onError(devId, FingerprintError::ERROR_UNABLE_TO_PROCESS, 0).isOk()) {
+            ALOGE("failed to invoke fingerprint onError callback");
+        }
+    }
     return ErrorFilter(ret);
 }
 
