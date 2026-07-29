@@ -199,6 +199,19 @@ Return<RequestStatus> BiometricsFingerprint::enumerate()  {
     uint32_t n = MAX_FINGERPRINTS;
     enumerate_2_0 enumerate = (enumerate_2_0) mDevice->enumerate;
     int ret = enumerate(mDevice, results, &n);
+    // The fpc vendor library returns the NUMBER of enumerated templates rather
+    // than 0-on-success (it logs "fpc_enumerate indices_count N" then returns N).
+    // With no templates it returns 0, which happened to look like success; with
+    // one enrolled finger it returns 1, which this HAL treated as an unknown
+    // error and dropped without any callback, leaving Android 12's
+    // InternalCleanupClient waiting forever. Treat a positive value as a count.
+    if (ret > 0 && ret <= MAX_FINGERPRINTS) {
+        ALOGD("enumerate() returned %d as a template count, not an error", ret);
+        if (n == 0 || n > static_cast<uint32_t>(ret)) {
+            n = static_cast<uint32_t>(ret);
+        }
+        ret = 0;
+    }
 
     if (ret == 0 && mClientCallback != nullptr) {
         ALOGD("Got %d enumerated templates", n);
