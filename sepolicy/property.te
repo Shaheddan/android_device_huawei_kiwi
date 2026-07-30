@@ -1,1 +1,6 @@
 type hw_version_prop, property_type;
+
+# init.qcom.bt.sh probes qcom.bt.dev_power_class and qcom.bt.le_dev_pwr_class.
+# Unlabelled they fall through to default_prop, which is system_internal_prop and
+# neverallowed for non-coredomain reads (private/property.te:58-63).
+vendor_internal_prop(vendor_bluetooth_prop)

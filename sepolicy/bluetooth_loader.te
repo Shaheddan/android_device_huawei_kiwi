@@ -5,3 +5,6 @@ allow bluetooth_loader oeminfo_device:dir { remove_name write search };
 allow bluetooth_loader oeminfo_device:file { getattr open read unlink };
 allow bluetooth_loader oeminfo:unix_stream_socket connectto;
 allow bluetooth_loader oeminfo_socket:sock_file write;
+
+# Read the optional qcom.bt.* power-class tunables
+get_prop(bluetooth_loader, vendor_bluetooth_prop)
