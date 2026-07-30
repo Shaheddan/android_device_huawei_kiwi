@@ -14,3 +14,11 @@ get_prop(system_server, exported_camera_prop)
 # KiwiParts bypass charging: settings app + init write the charger node
 allow system_app sysfs_bypass_charging:file { read open write getattr };
 allow init sysfs_bypass_charging:file { read open write setattr };
+
+# The Adreno GL driver reads vendor display properties from every app's
+# RenderThread; without this the camera app cannot create its preview surface
+# and reports "Can't connect to the camera" under enforcing.
+get_prop(untrusted_app, vendor_display_prop)
+get_prop(untrusted_app_29, vendor_display_prop)
+get_prop(priv_app, vendor_display_prop)
+get_prop(system_app, vendor_display_prop)
