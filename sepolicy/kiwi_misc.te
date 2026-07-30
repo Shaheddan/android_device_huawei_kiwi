@@ -22,3 +22,40 @@ get_prop(appdomain, vendor_display_prop)
 
 # oeminfo_nvm_ser traverses /sys/.../block to locate the oeminfo partition
 allow oeminfo sysfs_block:dir search;
+
+# ---- enforcing-boot harvest (2026-07-30) ----
+# Grantable property reads seen during a permissive boot
+allow rild config_prop:file r_file_perms;
+allow time_daemon radio_prop:file r_file_perms;
+allow thermal-engine radio_prop:file r_file_perms;
+allow hal_gnss_default radio_prop:file r_file_perms;
+allow hal_gnss_default system_prop:file r_file_perms;
+allow hal_gatekeeper_default system_prop:file r_file_perms;
+allow qti_init_shell radio_control_prop:file r_file_perms;
+allow zygote bluetooth_prop:file r_file_perms;
+allow audioserver vendor_default_prop:file r_file_perms;
+allow system_server vendor_display_prop:file r_file_perms;
+allow mm-qcamerad vendor_display_prop:file r_file_perms;
+allow mediaserver bootanim_system_prop:file r_file_perms;
+allow hal_graphics_composer_default init_service_status_private_prop:file r_file_perms;
+
+# Cannot be granted: default_prop is system_internal_prop and non-coredomain
+# reads are neverallowed (private/property.te:58-63). These are optional probes.
+dontaudit rild default_prop:file r_file_perms;
+dontaudit vm_bms default_prop:file r_file_perms;
+dontaudit perfd default_prop:file r_file_perms;
+dontaudit netmgrd default_prop:file r_file_perms;
+dontaudit qti_init_shell default_prop:file r_file_perms;
+dontaudit mediacodec default_prop:file r_file_perms;
+dontaudit untrusted_app vendor_default_prop:file r_file_perms;
+
+# dac_override is neverallowed by AOSP; these blobs ask for it and cope without
+dontaudit libqmi_oem_main self:capability dac_override;
+dontaudit netmgrd self:capability dac_override;
+
+# Huawei /proc/app_info, and init's binder chat with hwservicemanager
+dontaudit init proc_app_info:file r_file_perms;
+dontaudit init hwservicemanager:binder { call transfer };
+
+# Camera runs inside mediaserver on kiwi and looks up display.qservice
+allow mediaserver qdisplay_service:service_manager find;

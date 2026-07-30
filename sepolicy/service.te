@@ -1,0 +1,4 @@
+# qdisplay_service is declared vndservice_manager_type by sepolicy-legacy, but
+# kiwi's composer registers on /dev/binder (see the hardware/interfaces commit),
+# so the system servicemanager must accept it as well.
+typeattribute qdisplay_service service_manager_type;
