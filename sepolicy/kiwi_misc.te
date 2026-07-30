@@ -62,3 +62,8 @@ allow mediaserver qdisplay_service:service_manager find;
 # hci_qcomm_init (the binary, not the script) probes another unlabelled
 # property; default_prop is system_internal_prop so it cannot be granted.
 dontaudit bluetooth_loader default_prop:file r_file_perms;
+
+# TEMPORARY: boot globally enforcing with the display stack permissive so its
+# real denials can be harvested from a running device. Remove before shipping.
+permissive hal_graphics_composer_default;
+permissive surfaceflinger;
