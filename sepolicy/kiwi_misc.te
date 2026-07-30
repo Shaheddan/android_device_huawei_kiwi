@@ -22,3 +22,6 @@ get_prop(untrusted_app, vendor_display_prop)
 get_prop(untrusted_app_29, vendor_display_prop)
 get_prop(priv_app, vendor_display_prop)
 get_prop(system_app, vendor_display_prop)
+
+# oeminfo_nvm_ser traverses /sys/.../block to locate the oeminfo partition
+allow oeminfo sysfs_block:dir search;
