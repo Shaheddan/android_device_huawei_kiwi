@@ -6,7 +6,7 @@ import android.os.Bundle;
 
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.SeekBarPreference;
-import androidx.preference.SwitchPreferenceCompat;
+import androidx.preference.SwitchPreference;
 
 import com.android.settingslib.collapsingtoolbar.CollapsingToolbarBaseActivity;
 
@@ -26,8 +26,8 @@ public class BypassChargingActivity extends CollapsingToolbarBaseActivity {
     public static class SettingsFragment extends PreferenceFragmentCompat
             implements SharedPreferences.OnSharedPreferenceChangeListener {
 
-        private SwitchPreferenceCompat mBypassNow;
-        private SwitchPreferenceCompat mBypassAuto;
+        private SwitchPreference mBypassNow;
+        private SwitchPreference mBypassAuto;
         private SeekBarPreference mThreshold;
 
         @Override

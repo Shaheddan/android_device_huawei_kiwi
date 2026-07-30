@@ -2,13 +2,13 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <androidx.preference.SwitchPreferenceCompat
+    <SwitchPreference
         android:key="bypass_now"
         android:title="@string/bypass_now_title"
         android:summary="@string/bypass_now_summary"
         android:defaultValue="false" />
 
-    <androidx.preference.SwitchPreferenceCompat
+    <SwitchPreference
         android:key="bypass_auto"
         android:title="@string/bypass_auto_title"
         android:summary="@string/bypass_auto_summary"
