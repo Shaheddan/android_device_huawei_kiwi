@@ -235,5 +235,3 @@ TARGET_LD_SHIM_LIBS := \
 BUILD_BROKEN_ELF_PREBUILT_PRODUCT_COPY_FILES := true
 
 
-# TODO(enforcing): bringup only — remove once denials are harvested and fixed
-BOARD_KERNEL_CMDLINE += androidboot.selinux=permissive

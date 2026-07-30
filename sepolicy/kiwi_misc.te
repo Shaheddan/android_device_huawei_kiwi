@@ -46,7 +46,7 @@ dontaudit perfd default_prop:file r_file_perms;
 dontaudit netmgrd default_prop:file r_file_perms;
 dontaudit qti_init_shell default_prop:file r_file_perms;
 dontaudit mediacodec default_prop:file r_file_perms;
-dontaudit untrusted_app vendor_default_prop:file r_file_perms;
+dontaudit appdomain vendor_default_prop:file r_file_perms;
 
 # dac_override is neverallowed by AOSP; these blobs ask for it and cope without
 dontaudit libqmi_oem_main self:capability dac_override;
@@ -58,3 +58,7 @@ dontaudit init hwservicemanager:binder { call transfer };
 
 # Camera runs inside mediaserver on kiwi and looks up display.qservice
 allow mediaserver qdisplay_service:service_manager find;
+
+# hci_qcomm_init (the binary, not the script) probes another unlabelled
+# property; default_prop is system_internal_prop so it cannot be granted.
+dontaudit bluetooth_loader default_prop:file r_file_perms;
