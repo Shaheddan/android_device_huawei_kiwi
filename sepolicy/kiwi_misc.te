@@ -40,28 +40,28 @@ allow mediaserver bootanim_system_prop:file r_file_perms;
 
 # Cannot be granted: default_prop is system_internal_prop and non-coredomain
 # reads are neverallowed (private/property.te:58-63). These are optional probes.
-dontaudit rild default_prop:file r_file_perms;
-dontaudit vm_bms default_prop:file r_file_perms;
-dontaudit perfd default_prop:file r_file_perms;
-dontaudit netmgrd default_prop:file r_file_perms;
-dontaudit qti_init_shell default_prop:file r_file_perms;
-dontaudit mediacodec default_prop:file r_file_perms;
-dontaudit appdomain vendor_default_prop:file r_file_perms;
+# HARVEST: temporarily un-silenced -- dontaudit rild default_prop:file r_file_perms;
+# HARVEST: temporarily un-silenced -- dontaudit vm_bms default_prop:file r_file_perms;
+# HARVEST: temporarily un-silenced -- dontaudit perfd default_prop:file r_file_perms;
+# HARVEST: temporarily un-silenced -- dontaudit netmgrd default_prop:file r_file_perms;
+# HARVEST: temporarily un-silenced -- dontaudit qti_init_shell default_prop:file r_file_perms;
+# HARVEST: temporarily un-silenced -- dontaudit mediacodec default_prop:file r_file_perms;
+# HARVEST: temporarily un-silenced -- dontaudit appdomain vendor_default_prop:file r_file_perms;
 
 # dac_override is neverallowed by AOSP; these blobs ask for it and cope without
-dontaudit libqmi_oem_main self:capability dac_override;
-dontaudit netmgrd self:capability dac_override;
+# HARVEST: temporarily un-silenced -- dontaudit libqmi_oem_main self:capability dac_override;
+# HARVEST: temporarily un-silenced -- dontaudit netmgrd self:capability dac_override;
 
 # Huawei /proc/app_info, and init's binder chat with hwservicemanager
-dontaudit init proc_app_info:file r_file_perms;
-dontaudit init hwservicemanager:binder { call transfer };
+# HARVEST: temporarily un-silenced -- dontaudit init proc_app_info:file r_file_perms;
+# HARVEST: temporarily un-silenced -- dontaudit init hwservicemanager:binder { call transfer };
 
 # Camera runs inside mediaserver on kiwi and looks up display.qservice
 allow mediaserver qdisplay_service:service_manager find;
 
 # hci_qcomm_init (the binary, not the script) probes another unlabelled
 # property; default_prop is system_internal_prop so it cannot be granted.
-dontaudit bluetooth_loader default_prop:file r_file_perms;
+# HARVEST: temporarily un-silenced -- dontaudit bluetooth_loader default_prop:file r_file_perms;
 
 # TEMPORARY: boot globally enforcing with the display stack permissive so its
 # real denials can be harvested from a running device. Remove before shipping.
