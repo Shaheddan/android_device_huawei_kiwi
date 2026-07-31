@@ -9,3 +9,8 @@ ro.confg.hw_chipidversion             u:object_r:hw_version_prop:s0
 ro.product.CustCVersion               u:object_r:hw_version_prop:s0
 ro.product.CustDVersion               u:object_r:hw_version_prop:s0
 qcom.bt.                    u:object_r:vendor_bluetooth_prop:s0
+# The legacy hwcomposer polls init.svc.bootanim (hwc_utils.cpp:2627). AOSP's
+# exact-match allowlist doesn't include it, so it falls under the init.svc.
+# prefix and gets init_service_status_private_prop, which no vendor domain may
+# read. init_service_status_prop is system_restricted and therefore readable.
+init.svc.bootanim       u:object_r:init_service_status_prop:s0 exact string

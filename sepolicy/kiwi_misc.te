@@ -67,3 +67,4 @@ allow mediaserver qdisplay_service:service_manager find;
 # real denials can be harvested from a running device. Remove before shipping.
 permissive hal_graphics_composer_default;
 permissive surfaceflinger;
+allow hal_graphics_composer_default init_service_status_prop:file r_file_perms;
