@@ -53,7 +53,6 @@ allow mediaserver bootanim_system_prop:file r_file_perms;
 # HARVEST: temporarily un-silenced -- dontaudit netmgrd self:capability dac_override;
 
 # Huawei /proc/app_info, and init's binder chat with hwservicemanager
-# HARVEST: temporarily un-silenced -- dontaudit init proc_app_info:file r_file_perms;
 # HARVEST: temporarily un-silenced -- dontaudit init hwservicemanager:binder { call transfer };
 
 # Camera runs inside mediaserver on kiwi and looks up display.qservice
@@ -68,3 +67,11 @@ allow mediaserver qdisplay_service:service_manager find;
 permissive hal_graphics_composer_default;
 permissive surfaceflinger;
 allow hal_graphics_composer_default init_service_status_prop:file r_file_perms;
+
+# vendor_init evaluates `on property:` triggers from the qcom init scripts
+get_prop(vendor_init, vendor_kiwi_prop)
+set_prop(vendor_init, vendor_kiwi_prop)
+get_prop(vendor_init, bluetooth_prop)
+get_prop(vendor_init, persist_debug_prop)
+# init reads /proc/app_info — kiwi's own type; system_server and oeminfo already may
+allow init proc_app_info:file r_file_perms;

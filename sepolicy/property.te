@@ -4,3 +4,7 @@ type hw_version_prop, property_type;
 # Unlabelled they fall through to default_prop, which is system_internal_prop and
 # neverallowed for non-coredomain reads (private/property.te:58-63).
 vendor_internal_prop(vendor_bluetooth_prop)
+
+# Vendor-only properties read by `on property:` triggers in init.qcom.rc.
+# vendor_init may not touch default_prop (system_internal), so label them.
+vendor_internal_prop(vendor_kiwi_prop)

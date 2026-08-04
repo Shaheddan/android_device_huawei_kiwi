@@ -14,3 +14,5 @@ qcom.bt.                    u:object_r:vendor_bluetooth_prop:s0
 # prefix and gets init_service_status_private_prop, which no vendor domain may
 # read. init_service_status_prop is system_restricted and therefore readable.
 init.svc.bootanim       u:object_r:init_service_status_prop:s0 exact string
+ro.use_data_netmgrd             u:object_r:vendor_kiwi_prop:s0
+persist.env.fastdorm.enabled    u:object_r:vendor_kiwi_prop:s0

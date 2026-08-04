@@ -373,3 +373,12 @@ PRODUCT_PACKAGES += \
 
 # Scudo allocator is too heavy for 2-3 GB RAM
 PRODUCT_DISABLE_SCUDO := true
+
+# Set from the product (init, coredomain) rather than a vendor rc: vendor_init
+# may not set default_prop (system_internal), and losing
+# ro.kernel.ebpf.supported makes the critical bpfloader service fail and reboot
+# the device under enforcing.
+PRODUCT_PROPERTY_OVERRIDES += \
+    ro.kernel.ebpf.supported=false \
+    ro.adb.nonblocking_ffs=0 \
+    persist.adb.nonblocking_ffs=0
