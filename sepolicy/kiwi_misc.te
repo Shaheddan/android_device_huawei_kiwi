@@ -75,3 +75,8 @@ get_prop(vendor_init, bluetooth_prop)
 get_prop(vendor_init, persist_debug_prop)
 # init reads /proc/app_info — kiwi's own type; system_server and oeminfo already may
 allow init proc_app_info:file r_file_perms;
+
+# HDR capture makes mm-qcamerad ask perfd for a perf boost from imgcomp_thread
+allow mm-qcamerad mpctl_socket:dir search;
+allow mm-qcamerad mpctl_socket:sock_file write;
+allow mm-qcamerad perfd:unix_stream_socket connectto;
