@@ -1,1 +1,8 @@
 allow hal_light_default libqmi_oem_main:unix_stream_socket connectto;
+
+# The light HAL writes /sys/class/leds/lcd-backlight/brightness (labelled
+# sysfs_graphics). Without this it exits with EACCES, ILight never registers,
+# hwservicemanager retries it as a lazy HAL forever, and system_server's
+# LightsService blocks -> bootloop.
+allow hal_light_default sysfs_graphics:file rw_file_perms;
+allow hal_light_default sysfs_graphics:dir search;
