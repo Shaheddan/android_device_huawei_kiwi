@@ -6,3 +6,7 @@ allow hal_light_default libqmi_oem_main:unix_stream_socket connectto;
 # LightsService blocks -> bootloop.
 allow hal_light_default sysfs_graphics:file rw_file_perms;
 allow hal_light_default sysfs_graphics:dir search;
+# The HAL reaches the node via /sys/class/leds/... — those parent dirs and the
+# symlink are plain sysfs, so the sysfs_graphics rule alone isn't enough.
+allow hal_light_default sysfs:dir search;
+allow hal_light_default sysfs:lnk_file read;
