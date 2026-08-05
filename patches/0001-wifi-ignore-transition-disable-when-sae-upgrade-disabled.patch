@@ -1,0 +1,37 @@
+From 003022484655514b6bdcf4cb7a79832dad63a1d7 Mon Sep 17 00:00:00 2001
+From: shahed <jamshidalinezhadian@gmail.com>
+Date: Wed, 29 Jul 2026 22:22:39 +0330
+Subject: [PATCH] wifi: don't honour WPA3 transition-disable when SAE upgrade
+ is disabled (legacy drivers without SAE lose PSK and can never reconnect)
+
+Change-Id: I94ab712aa12c0e637543247dc5cefece336b7daf
+---
+ .../com/android/server/wifi/WifiConfigManager.java   | 12 +++++++++++-
+ 1 file changed, 11 insertions(+), 1 deletion(-)
+
+diff --git a/service/java/com/android/server/wifi/WifiConfigManager.java b/service/java/com/android/server/wifi/WifiConfigManager.java
+index b021213..c5d45aa 100644
+--- a/service/java/com/android/server/wifi/WifiConfigManager.java
++++ b/service/java/com/android/server/wifi/WifiConfigManager.java
+@@ -3690,7 +3690,17 @@ public class WifiConfigManager {
+         }
+         if (0 != (indicationBit & WifiMonitor.TDI_USE_WPA3_PERSONAL)
+                 && config.isSecurityType(WifiConfiguration.SECURITY_TYPE_SAE)) {
+-            config.setSecurityParamsEnabled(WifiConfiguration.SECURITY_TYPE_PSK, false);
++            // A device whose driver cannot do WPA3/SAE must not honour a transition-disable
++            // indication: it would switch PSK off and leave SAE as the only enabled security
++            // type, after which getCandidateSecurityParams() returns null, SupplicantStaNetworkHal
++            // logs "No available security params." and the network is never handed to
++            // wpa_supplicant again. config_wifiSaeUpgradeEnabled is false on such devices.
++            if (mContext.getResources().getBoolean(R.bool.config_wifiSaeUpgradeEnabled)) {
++                config.setSecurityParamsEnabled(WifiConfiguration.SECURITY_TYPE_PSK, false);
++            } else {
++                Log.i(TAG, "Ignoring WPA3 transition disable indication for network "
++                        + networkId + ": SAE upgrade disabled on this device, keeping PSK");
++            }
+         }
+         if (0 != (indicationBit & WifiMonitor.TDI_USE_SAE_PK)) {
+             config.enableSaePkOnlyMode(true);
+-- 
+2.43.0
+

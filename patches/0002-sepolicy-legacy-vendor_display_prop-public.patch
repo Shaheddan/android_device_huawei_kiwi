@@ -1,0 +1,28 @@
+From cf54b872976d90abc3cc962e01c10ec1a426e4be Mon Sep 17 00:00:00 2001
+From: shahed <jamshidalinezhadian@gmail.com>
+Date: Wed, 5 Aug 2026 01:37:24 +0330
+Subject: [PATCH] property: make vendor_display_prop public (apps' GL init
+ reads it) and fix a context typo
+
+---
+ common/property.te | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/common/property.te b/common/property.te
+index 44b999b..f185f7c 100644
+--- a/common/property.te
++++ b/common/property.te
+@@ -47,7 +47,9 @@ type msm_irqbl_sdm630_prop, property_type;
+ type camera_prop, property_type;
+ type spcomlib_prop, property_type;
+ type sdm_idle_time_prop, property_type;
+-type vendor_display_prop, property_type;
++# Marked public so coredomain (apps) may read it: the Adreno GL driver
++# reads these on every RenderThread init.
++vendor_public_prop(vendor_display_prop)
+ type scr_enabled_prop, property_type;
+ type bg_daemon_prop, property_type;
+ type bg_boot_complete_prop, property_type;
+-- 
+2.43.0
+
