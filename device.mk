@@ -87,7 +87,6 @@ PRODUCT_COPY_FILES += \
 
 # ANT+
 PRODUCT_PACKAGES += \
-    AntHalService \
     libantradio
 
 # APEX
@@ -106,7 +105,6 @@ PRODUCT_PACKAGES += \
     android.hardware.camera.provider@2.4-impl-legacy \
     camera.device@1.0-impl-legacy \
     camera.msm8916 \
-    libmm-qcamera \
     Camera2
 
 # Compatibility
@@ -146,8 +144,7 @@ PRODUCT_PACKAGES += \
 
 # Filesystem
 PRODUCT_PACKAGES += \
-    e2fsck \
-    make_ext4fs
+    e2fsck
 
 # Fingerprint
 PRODUCT_PACKAGES += \
@@ -231,7 +228,6 @@ PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/media_codecs_performance.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_performance.xml
 
 PRODUCT_PACKAGES += \
-    libdashplayer \
     libmm-omxcore \
     libOmxAacEnc \
     libOmxAmrEnc \
@@ -239,8 +235,6 @@ PRODUCT_PACKAGES += \
     libOmxEvrcEnc \
     libOmxQcelp13Enc \
     libOmxVdec \
-    libOmxVdecHevc \
-    libOmxSwVencHevc \
     libOmxVenc \
     libOmxVidcCommon \
     libstagefrighthw
