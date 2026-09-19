@@ -98,7 +98,6 @@ PRODUCT_COPY_FILES += \
 PRODUCT_PACKAGES += \
     android.hardware.bluetooth@1.0-impl \
     android.hardware.bluetooth@1.0-service \
-    android.hardware.bluetooth@1.0.vendor \
     libbt-vendor \
     init.qcom.bt.sh
 
@@ -139,8 +138,7 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     android.hardware.drm@1.0-impl \
     android.hardware.drm@1.0-service \
-    android.hardware.drm@1.4-service.clearkey \
-    android.hardware.drm@1.3.vendor
+    android.hardware.drm@1.4-service.clearkey
 
 # Encryption
 PRODUCT_PACKAGES += \
@@ -192,9 +190,7 @@ PRODUCT_PACKAGES += \
     android.hidl.base@1.0 \
     android.hidl.manager@1.0 \
     libhidltransport \
-    libhidltransport.vendor \
-    libhwbinder \
-    libhwbinder.vendor
+    libhwbinder
 
 # Health
 PRODUCT_PACKAGES += \
@@ -254,12 +250,6 @@ PRODUCT_PACKAGES += \
     android.hardware.power-service-qti \
     android.hardware.power.stats@1.0-service.mock
 
-# Radio
-PRODUCT_PACKAGES += \
-    android.hardware.radio@1.6.vendor \
-    android.hardware.radio.config@1.3.vendor \
-    android.hardware.radio.deprecated@1.0.vendor \
-    android.hardware.secure_element@1.2.vendor
 
 # Ramdisk
 PRODUCT_PACKAGES += \
@@ -363,9 +353,6 @@ endif
 PRODUCT_PACKAGES += \
     KiwiParts
 
-# 19.1 additions (ref: Moto msm8916 19.1)
-PRODUCT_PACKAGES += \
-    android.system.net.netd@1.1.vendor
 
 PRODUCT_PACKAGES += \
     CellBroadcastAppPlatform \
