@@ -3083,7 +3083,7 @@ int QCamera2HardwareInterface::takePicture()
                 QCameraPicChannel *pCapChannel =
                     (QCameraPicChannel *)m_channels[QCAMERA_CH_TYPE_CAPTURE];
                 if (NULL != pCapChannel) {
-                    if (mParameters.isUbiFocusEnabled()|
+                    if (mParameters.isUbiFocusEnabled() ||
                         mParameters.isChromaFlashEnabled()) {
                         rc = startAdvancedCapture(pCapChannel);
                         if (rc != NO_ERROR) {
