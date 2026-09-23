@@ -234,4 +234,10 @@ TARGET_LD_SHIM_LIBS := \
 # 19.1: vendor blobs shipped via PRODUCT_COPY_FILES trip new ELF checks (ref: Moto 19.1)
 BUILD_BROKEN_ELF_PREBUILT_PRODUCT_COPY_FILES := true
 
-
+# Dexpreopt
+# eng builds default to pre-opting only the boot image and system server, so
+# every app is compiled on the phone at first boot. On kiwi that first boot
+# runs 15+ minutes, and the 3.10 kernel has no pidfd_open, so installd cannot
+# time out a stuck dex2oat. Pre-opt everything at build time, as user and
+# userdebug builds do.
+WITH_DEXPREOPT_BOOT_IMG_AND_SYSTEM_SERVER_ONLY := false
