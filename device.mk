@@ -344,6 +344,16 @@ PRODUCT_PACKAGES += \
     CellBroadcastAppPlatform \
     CellBroadcastServiceModulePlatform
 
+# The platform (non-APEX) CellBroadcast variants need the privapp allowlists
+# that normally ship inside the com.android.cellbroadcast APEX. Without them,
+# ro.control_privapp_permissions=enforce makes system_server throw at
+# systemReady and crash-loop behind the boot animation. An allowlist is only
+# read from the same partition as its app: receiver in system_ext, service in
+# system.
+PRODUCT_COPY_FILES += \
+    packages/apps/CellBroadcastReceiver/apex/permissions/com.android.cellbroadcastreceiver.xml:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/permissions/com.android.cellbroadcastreceiver.xml \
+    packages/apps/CellBroadcastReceiver/apex/permissions/com.android.cellbroadcastservice.xml:$(TARGET_COPY_OUT_SYSTEM)/etc/permissions/com.android.cellbroadcastservice.xml
+
 # Scudo allocator is too heavy for 2-3 GB RAM
 PRODUCT_DISABLE_SCUDO := true
 
