@@ -1,4 +1,8 @@
 service fps_hal /vendor/bin/hw/android.hardware.biometrics.fingerprint@1.0-service.kiwi
+    # Disabled for the Android 13 bring-up: once started, teecd raises an
+    # SError that panics the 3.10 kernel (bad mode in Error handler).
+    # Remove this line once the fingerprint path is fixed.
+    disabled
     # "class hal" causes a race condition on some devices due to files created
     # in /data. As a workaround, postpone startup until later in boot once
     # /data is mounted.
