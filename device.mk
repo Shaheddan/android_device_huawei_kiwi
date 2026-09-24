@@ -357,11 +357,12 @@ PRODUCT_COPY_FILES += \
 # Scudo allocator is too heavy for 2-3 GB RAM
 PRODUCT_DISABLE_SCUDO := true
 
-# Set from the product (init, coredomain) rather than a vendor rc: vendor_init
-# may not set default_prop (system_internal), and losing
-# ro.kernel.ebpf.supported makes the critical bpfloader service fail and reboot
-# the device under enforcing.
+# ro.kernel.ebpf.supported is deliberately left unset: the lineage-20-ebpf
+# kernel provides bpf(), cgroup-bpf and cgroup v2, and every kiwi userspace
+# eBPF workaround reads it with a default of true. If it ever has to be forced
+# to false again, set it here (product/init scope): vendor_init may not set
+# default_prop, and losing it makes the critical bpfloader service reboot the
+# device under enforcing.
 PRODUCT_PROPERTY_OVERRIDES += \
-    ro.kernel.ebpf.supported=false \
     ro.adb.nonblocking_ffs=0 \
     persist.adb.nonblocking_ffs=0
