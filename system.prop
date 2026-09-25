@@ -110,7 +110,9 @@ ro.qcom.ad.sensortype=2
 # Perf
 ro.am.reschedule_service=true
 ro.config.max_starting_bg=8
-ro.core_ctl_min_cpu=0
+# perfd resets the fast cluster's core_ctl min_cpus to this after every boost;
+# it must match the screen-on value (the power HAL parks cores on screen off).
+ro.core_ctl_min_cpu=4
 ro.core_ctl_max_cpu=4
 ro.min_freq_0=960000
 ro.min_freq_4=800000

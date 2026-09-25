@@ -58,7 +58,10 @@ on enable-low-power
     write /sys/module/msm_thermal/core_control/enabled 1
 
     # Enable core control
-    write /sys/devices/system/cpu/cpu0/core_ctl/min_cpus 0
+    # Screen-on default: keep the fast cluster available. With cores parked,
+    # every task's allowed-CPU mask shrinks to the few online cores and the
+    # UI lags badly; the power HAL parks them again when the screen goes off.
+    write /sys/devices/system/cpu/cpu0/core_ctl/min_cpus 4
     write /sys/devices/system/cpu/cpu0/core_ctl/max_cpus 4
     write /sys/devices/system/cpu/cpu0/core_ctl/busy_up_thres 68
     write /sys/devices/system/cpu/cpu0/core_ctl/busy_down_thres 40
@@ -69,6 +72,12 @@ on enable-low-power
     write /sys/devices/system/cpu/cpu4/core_ctl/busy_down_thres 5
     write /sys/devices/system/cpu/cpu4/core_ctl/offline_delay_ms 5000
     write /sys/devices/system/cpu/cpu4/core_ctl/not_preferred 1
+    write /sys/devices/system/cpu/cpu4/core_ctl/min_cpus 4
+    # The power HAL (user system) changes these on screen off/on.
+    chown system system /sys/devices/system/cpu/cpu0/core_ctl/min_cpus
+    chmod 0664 /sys/devices/system/cpu/cpu0/core_ctl/min_cpus
+    chown system system /sys/devices/system/cpu/cpu4/core_ctl/min_cpus
+    chmod 0664 /sys/devices/system/cpu/cpu4/core_ctl/min_cpus
 
     # HMP scheduler (big.Little cluster related) settings
     write /proc/sys/kernel/sched_upmigrate 75

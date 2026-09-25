@@ -4,3 +4,7 @@ allow hal_power_default gesture_sysfs:file { getattr open read write };
 allow servicemanager hal_power_default:dir search;
 allow servicemanager hal_power_default:file { read open };
 allow servicemanager hal_power_default:process getattr;
+
+# Park / unpark CPU cores through core_ctl on screen off / on (power-8916.c).
+r_dir_file(hal_power_default, sysfs_devices_system_cpu)
+allow hal_power_default sysfs_devices_system_cpu:file w_file_perms;
