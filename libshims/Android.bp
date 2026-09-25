@@ -31,3 +31,13 @@ cc_library_shared {
 
     compile_multilib: "32",
 }
+
+// Huawei's libbtaddr.so (used by hci_qcomm_init, which downloads the WCNSS
+// Bluetooth firmware) calls set_sched_policy(), which moved from libcutils to
+// libprocessgroup; without it hci_qcomm_init can't link and Bluetooth never
+// starts. Kept separate from libshim_cutils so no other blob gets this symbol.
+cc_library_shared {
+    name: "libshim_btaddr",
+    srcs: ["btaddr.c"],
+    compile_multilib: "64",
+}

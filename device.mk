@@ -106,6 +106,7 @@ PRODUCT_PACKAGES += \
 # Compatibility
 PRODUCT_PACKAGES += \
     libshim_cutils \
+    libshim_btaddr \
     libshim_signinfolistener
 
 # Display
