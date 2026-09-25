@@ -35,6 +35,18 @@
             <instance>default</instance>
         </interface>
     </hal>
+    <!-- Registered by the audio HAL service; the Android 13 Bluetooth app only
+         finds it through this entry (else "HalVersionManager No supported HAL
+         version"), and without it no A2DP audio session is ever started. -->
+    <hal format="hidl">
+        <name>android.hardware.bluetooth.audio</name>
+        <transport>hwbinder</transport>
+        <version>2.0</version>
+        <interface>
+            <name>IBluetoothAudioProvidersFactory</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
     <hal format="hidl">
         <name>android.hardware.camera.provider</name>
         <transport arch="32+64">passthrough</transport>

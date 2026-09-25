@@ -367,3 +367,27 @@ PRODUCT_DISABLE_SCUDO := true
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.adb.nonblocking_ffs=0 \
     persist.adb.nonblocking_ffs=0
+
+# Bluetooth (Android 13)
+# kiwi's WCNSS firmware only speaks the v0.55 vendor capabilities and answers
+# APCF "read extended features" (0xFD57/0xFF) with a malformed reply, which
+# makes the stack abort at start-up.
+PRODUCT_VENDOR_PROPERTIES += \
+    bluetooth.le.disable_apcf_extended_features=1
+
+# Profiles are opt-in per device since Android 13; these are the phone-side
+# classic profiles this Bluetooth 4.1 controller can serve (no LE Audio).
+PRODUCT_VENDOR_PROPERTIES += \
+    bluetooth.profile.a2dp.source.enabled=true \
+    bluetooth.profile.avrcp.target.enabled=true \
+    bluetooth.profile.bas.client.enabled=true \
+    bluetooth.profile.gatt.enabled=true \
+    bluetooth.profile.hfp.ag.enabled=true \
+    bluetooth.profile.hid.device.enabled=true \
+    bluetooth.profile.hid.host.enabled=true \
+    bluetooth.profile.map.server.enabled=true \
+    bluetooth.profile.opp.enabled=true \
+    bluetooth.profile.pan.nap.enabled=true \
+    bluetooth.profile.pan.panu.enabled=true \
+    bluetooth.profile.pbap.server.enabled=true \
+    bluetooth.profile.sap.server.enabled=true
