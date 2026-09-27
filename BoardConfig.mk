@@ -230,7 +230,8 @@ TARGET_LD_SHIM_LIBS := \
     /system/vendor/lib64/libdmd.so|libshim_cutils.so:\
     /system/vendor/lib64/libsecure_boot_keybox.so|libshim_cutils.so:\
     /system/vendor/lib64/sensors.kiwi.so|libshim_cutils.so:\
-    /system/vendor/lib64/libbtaddr.so|libshim_btaddr.so
+    /system/vendor/lib64/libbtaddr.so|libshim_btaddr.so:\
+    /system/vendor/lib64/libmm-abl.so|libshim_powermanager.so
 
 # 19.1: vendor blobs shipped via PRODUCT_COPY_FILES trip new ELF checks (ref: Moto 19.1)
 BUILD_BROKEN_ELF_PREBUILT_PRODUCT_COPY_FILES := true

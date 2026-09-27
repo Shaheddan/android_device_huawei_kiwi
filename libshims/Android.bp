@@ -41,3 +41,13 @@ cc_library_shared {
     srcs: ["btaddr.c"],
     compile_multilib: "64",
 }
+
+// Huawei's libmm-abl.so (mm-pp-daemon, display post-processing) was built against
+// Android 5.1's native IPowerManager, which libpowermanager no longer provides, so
+// the daemon cannot link and init restarts it every 5 s.
+cc_library_shared {
+    name: "libshim_powermanager",
+    srcs: ["powermanager.cpp"],
+    shared_libs: ["libbinder", "libutils"],
+    compile_multilib: "64",
+}

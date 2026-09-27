@@ -108,6 +108,7 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     libshim_cutils \
     libshim_btaddr \
+    libshim_powermanager \
     libshim_signinfolistener
 
 # Display
