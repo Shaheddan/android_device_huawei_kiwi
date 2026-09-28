@@ -159,5 +159,9 @@ on charger
 
 # Bypass charging control (BQ24296 factory_diag: 0 = charge off / input on)
 on boot
+    # mm-pp-daemon's partial-update thread spins at 100% CPU polling this node
+    # (sysfs poll semantics changed with the kernfs backport). Partial update is
+    # disabled on this panel, so hide the node from the daemon (runs as system).
+    chmod 0000 /sys/devices/virtual/graphics/fb0/dyn_pu
     chown system system /sys/class/power_supply/battery/factory_diag
     chmod 0660 /sys/class/power_supply/battery/factory_diag
