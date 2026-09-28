@@ -10,5 +10,7 @@ android_app {
         "androidx.preference_preference",
         "SettingsLibCollapsingToolbarBaseActivity",
         "SettingsLibSettingsTheme",
+        "SettingsLibTopIntroPreference",
+        "SettingsLibFooterPreference",
     ],
 }

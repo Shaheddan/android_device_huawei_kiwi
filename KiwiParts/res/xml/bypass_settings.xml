@@ -1,26 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Android 13 Settings layout: intro, live status card, the modes, and a footer.
+     Keys and storage are unchanged, so BypassService behaves exactly as before. -->
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <SwitchPreference
-        android:key="bypass_now"
-        android:title="@string/bypass_now_title"
-        android:summary="@string/bypass_now_summary"
-        android:defaultValue="false" />
+    <com.android.settingslib.widget.TopIntroPreference
+        android:key="bypass_intro"
+        android:title="@string/bypass_intro" />
 
-    <SwitchPreference
-        android:key="bypass_auto"
-        android:title="@string/bypass_auto_title"
-        android:summary="@string/bypass_auto_summary"
-        android:defaultValue="false" />
+    <org.lineageos.settings.kiwi.BypassStatusPreference
+        android:key="bypass_status" />
 
-    <SeekBarPreference
-        android:key="bypass_threshold"
-        android:title="@string/bypass_threshold_title"
-        android:max="100"
-        app:min="10"
-        android:defaultValue="80"
-        app:showSeekBarValue="false"
-        app:updatesContinuously="true" />
+    <PreferenceCategory
+        android:key="bypass_mode"
+        android:title="@string/bypass_mode_category">
+
+        <SwitchPreference
+            android:key="bypass_now"
+            android:title="@string/bypass_now_title"
+            android:summary="@string/bypass_now_summary"
+            android:defaultValue="false" />
+
+        <SwitchPreference
+            android:key="bypass_auto"
+            android:title="@string/bypass_auto_title"
+            android:summary="@string/bypass_auto_summary"
+            android:defaultValue="false" />
+
+        <SeekBarPreference
+            android:key="bypass_threshold"
+            android:title="@string/bypass_threshold_title"
+            android:max="100"
+            app:min="10"
+            android:defaultValue="80"
+            app:showSeekBarValue="false"
+            app:updatesContinuously="true" />
+
+    </PreferenceCategory>
+
+    <com.android.settingslib.widget.FooterPreference
+        android:key="footer_preference"
+        android:title="@string/bypass_footer"
+        android:selectable="false" />
 
 </PreferenceScreen>
