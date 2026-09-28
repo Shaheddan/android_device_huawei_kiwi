@@ -1,0 +1,7 @@
+# Harmless probes of properties the blobs only read if set, and a boot-control
+# lookup kiwi has no HAL for: keep them out of the enforcing log.
+dontaudit hal_camera_default { persist_debug_prop bootanim_system_prop default_prop }:file { read open getattr map };
+dontaudit hal_graphics_composer_default default_prop:file { read open getattr map };
+dontaudit surfaceflinger vendor_default_prop:file { read open getattr map };
+dontaudit vold hal_bootctl_hwservice:hwservice_manager find;
+dontaudit netmgrd fs_bpf:dir search;

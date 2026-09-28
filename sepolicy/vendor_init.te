@@ -11,3 +11,6 @@ allow vendor_init fingerprintd_data_file:dir getattr;
 # firmware dir traversal (earlier rule covered files only) + mmcblk0p8 setattr from init rc
 allow vendor_init firmware_file:dir search;
 allow vendor_init block_device:blk_file setattr;
+
+allow vendor_init sysfs_mmc_block:dir search;
+allow vendor_init sysfs_mmc_block:file w_file_perms;

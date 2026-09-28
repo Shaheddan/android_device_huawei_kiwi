@@ -276,15 +276,6 @@ on property:ro.use_data_netmgrd=false
     # netmgr not supported on specific target
     stop netmgrd
 
-# Adjust socket buffer to enlarge TCP receive window for high bandwidth
-# but only if ro.data.large_tcp_window_size property is set.
-on property:ro.data.large_tcp_window_size=true
-    write /proc/sys/net/ipv4/tcp_adv_win_scale 2
-
-on property:crypto.driver.load=1
-    insmod /system/lib/modules/qce.ko
-    insmod /system/lib/modules/qcedev.ko
-
 service ril-daemon2 /vendor/bin/hw/rild -c 2
     class main
     user radio
@@ -313,29 +304,8 @@ on ffbm
     trigger post-fs-data
     trigger early-boot
 
-service qbcharger /charger -m 1
-    disabled
-    oneshot
-
-on property:sys.qbcharger.enable=true
-    start qbcharger
-
-on property:sys.qbcharger.enable=false
-    stop qbcharger
-
 service vm_bms /system/vendor/bin/vm_bms
     class main
     user root
     group root wakelock
 
-# set primary sd directory
-service preparesdservice /system/bin/vdc volume storagetosd
-   class main
-   disabled
-   oneshot
-
-on property:persist.sys.primarysd=*
-   start preparesdservice
-
-on property:apexd.status=ready
-    mount none /system/etc/swcodec/ld.config.txt /apex/com.android.media.swcodec/etc/ld.config.txt bind

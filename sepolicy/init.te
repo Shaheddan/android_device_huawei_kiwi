@@ -1,1 +1,4 @@
 # required for LD_SHIM_LIBS
+
+allow init sysfs_mmc_block:dir search;
+allow init sysfs_mmc_block:file w_file_perms;
