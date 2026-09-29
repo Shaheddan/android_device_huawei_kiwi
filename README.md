@@ -1,100 +1,119 @@
-# Device tree for Huawei Honor 5X (kiwi) — LineageOS 19.1
+# Device tree for Huawei Honor 5X (kiwi) — LineageOS 20
 
-Unofficial LineageOS 19.1 (Android 12L) for the Huawei Honor 5X, ported
-from this device's own LineageOS 18.1 tree.
+Unofficial LineageOS 20 (Android 13) for the Huawei Honor 5X, running on the
+phone's original 3.10 kernel with eBPF, PSI and cgroup v2 backported so that
+Android 13 can boot and run on it.
 
 ## Device specifications
 
-| Feature  | Specification                     |
-| :------- | :-------------------------------- |
-| SoC      | Qualcomm MSM8939 Snapdragon 616   |
-| CPU      | 4x1.5 GHz + 4x1.2 GHz Cortex-A53  |
-| GPU      | Adreno 405                        |
-| Memory   | 2/3 GB RAM                        |
-| Display  | 5.5" 1080x1920 IPS                |
-| Storage  | 16 GB (microSD support)           |
-| Battery  | 3000 mAh                          |
-| Kernel   | 3.10 (arm64, non-Treble)          |
+| Feature | Specification                    |
+| ------- | -------------------------------- |
+| SoC     | Qualcomm MSM8939 Snapdragon 616  |
+| CPU     | 4x1.5 GHz + 4x1.2 GHz Cortex-A53 |
+| GPU     | Adreno 405                       |
+| Memory  | 2/3 GB RAM                       |
+| Display | 5.5" 1080x1920 IPS               |
+| Storage | 16 GB (microSD support)          |
+| Battery | 3000 mAh                         |
+| Kernel  | 3.10 (arm64, non-Treble)         |
 
 ## Status
 
-Boots **SELinux enforcing** with a clean denial log. Working: RIL (calls,
-SMS, data), Wi-Fi including toggle/reconnect, Bluetooth with A2DP audio,
-camera, audio, sensors, GPS, fingerprint (enrolment survives reboot),
-MTP/ADB, lockscreen, brightness and auto-brightness.
+**Working**
 
-### Known limitations
+- Calls (with call audio), incoming calls, SMS send and receive, mobile data
+- Wi-Fi, including WPA2/WPA3 transition-mode networks
+- Bluetooth, including audio playback
+- Camera: photos and video recording, front and back; flashlight
+- Fingerprint (enrol and unlock)
+- Audio, sensors, MTP/ADB
+- SELinux enforcing
+- eBPF (traffic accounting), PSI-based low-memory killer
 
-- **Rear-camera HDR** fails in the stock Camera2 app. AOSP's Camera2→HAL1
-  legacy shim calls `startPreview` while the HAL is still in `PIC_TAKING`;
-  the longer rear-sensor HDR capture lands inside that window. The HAL is
-  fine — any Camera API1 app (e.g. Open Camera) does HDR correctly.
-- Flashing over an existing `/data` may leave stale SELinux labels on
-  `/data/media`, which stops photos saving. Fix once with
-  `adb shell restorecon -RF /data/media`.
+**Not yet verified:** GPS, FM radio, Wi-Fi hotspot / USB tethering,
+Bluetooth call audio.
+
+**Known limitations**
+
+- BPF tethering offload is unavailable on the 3.10 kernel; tethering uses the
+  regular (non-offloaded) forwarding path.
+- The cgroup v2 freezer does not exist on 3.10, so Android's cached-app
+  freezer is disabled.
 
 ## Extras
 
-- **Bypass charging** (KiwiParts): Settings → Battery → Bypass charging,
-  restyled for Android 12 with a collapsing toolbar and system dark mode.
-  Manual mode holds the current battery level; auto mode charges to a
-  configurable threshold and holds there. Backed by the BQ24296 charger
-  IC's charge-disable path (`factory_diag` sysfs node).
+- **Bypass charging** (KiwiParts): Settings → Battery → Bypass charging.
+  "Bypass now" holds the current battery level; "Auto bypass" charges to a
+  configurable level and holds there. A live status card shows what the
+  charger and battery are doing. Backed by the BQ24296 charger IC's
+  charge-disable path (`factory_diag` sysfs node). Normal charging always
+  returns when the charger is unplugged.
 
-## Notable 18.1 → 19.1 changes
+## Notable 19.1 → 20 changes (device tree)
 
-- **Kernel is no longer stock.** Android 12's keystore2 authorizes callers
-  via `getCallingSid()`, which needs `FLAT_BINDER_FLAG_TXN_SECURITY_CTX` —
-  absent from the stock 3.10 binder, so every unlock was denied. A modern
-  binder driver was transplanted in, with `READ_ONCE`/`WRITE_ONCE` and
-  `wake_up_pollfree` backported to support it.
-- `CONFIG_RT_GROUP_SCHED` disabled: Android 12 dropped init's RT-bandwidth
-  writes, leaving every child cgroup at `rt_runtime_us=0` and aborting
-  Bluetooth at `timer_create(CLOCK_BOOTTIME)`.
-- prima restores `con_mode` to STA when a SoftAP adapter is closed —
-  Android 12's Wi-Fi HAL deletes the AP interface instead of switching it
-  back, which left the driver stuck creating `softap.0` and never `wlan0`.
-- Camera: `TARGET_HAS_LEGACY_CAMERA_HAL1` (the blob is 32-bit only), plus
-  the composer registering `display.qservice` on `/dev/binder`.
-- Telephony: LineageOS `simactivation` patch, required for the legacy modem
-  to activate its UICC subscription apps.
-- `config_biometric_sensors` overlay — Android 12 registers no fingerprint
-  sensor without it — and a HAL fix for the fpc blob returning the template
-  *count* from `enumerate()` rather than 0-on-success.
-- LiveDisplay removed: `libmm-abl.so` needs `android::IPowerManager::
-  asInterface`, which Android 12 removed when PowerManager went AIDL.
-- Keymaster 4.1, clearkey 1.4, Wi-Fi overlay moved to
-  `packages/modules/Wifi` (resources became a mainline module).
-- SELinux policy now uses TipzTeam's `device/qcom/sepolicy-legacy`, which
-  has a real `msm8916` directory and reached enforcing on this platform.
-- `ro.kernel.ebpf.supported=false` is set from the product rather than a
-  vendor rc: `vendor_init` may not set `default_prop`, and without it the
-  critical `bpfloader` service fails and reboots the device.
+- Camera: the camera provider runs as a 32-bit binderized service, and the
+  HALv1 devices are served through the restored framework path (see
+  platform patches). cameraserver is built 32-bit to match the HALv1 video
+  metadata layout.
+- Bluetooth: audio HAL entry in the manifest, profiles enabled through
+  properties, APCF extended features disabled (the WCNSS firmware answers
+  that command with a malformed reply), `libshim_btaddr` for
+  `set_sched_policy` (moved to libprocessgroup in Android 13).
+- Fingerprint HAL starts once boot has completed.
+- `mm-pp-daemon` (display post-processing) runs again: an `IPowerManager`
+  shim for its 5.1-era library, and the unused partial-update node is hidden
+  from it to stop a busy loop.
+- Performance: all cores stay online while the screen is on.
+- SELinux enforcing on Android 13: eMMC queue label, vendor property
+  triggers that Android 13 discards removed, CFQ scheduler set directly.
+- KiwiParts redesigned in Android 13's Material You style.
+
+## Platform patches
+
+Android 13 needs changes outside the device tree for this phone. They are
+in `patches/lineage-20/` (one folder per repository) and are applied with
+`patches/apply-patches.sh`:
+
+- **frameworks/av, frameworks/base**: camera HALv1 support (Camera1 API and
+  the legacy Camera2 shim), video recording from HALv1 cameras
+- **frameworks/opt/telephony**: SIM activation for the legacy Qualcomm RIL
+  (`ro.telephony.ril.config=simactivation`); without it incoming calls,
+  incoming SMS and call state never arrive
+- **packages/modules/Wifi**: ignore WPA3 "transition disable" when the
+  driver has no SAE support
+- **frameworks/base (HWUI)**: fix for a 4-second UI freeze
+- **system/core, system/bpf, system/netd, packages/modules/Connectivity,
+  hardware/…, vendor/…**: adaptations for the 3.10 kernel and this hardware
 
 ## Building
 
-Requires two platform patches beyond this tree and the kernel:
+```
+repo init -u https://github.com/LineageOS/android.git -b lineage-20.0
+# copy manifests/*.xml from this repository into .repo/local_manifests/
+repo sync
+bash device/huawei/kiwi/patches/apply-patches.sh
+source build/envsetup.sh
+lunch lineage_kiwi-userdebug
+mka bacon
+```
 
-- `packages/modules/Wifi` — ignore the WPA3 transition-disable indication
-  when `config_wifiSaeUpgradeEnabled` is false. Without it, a WPA2/WPA3
-  router permanently disables the PSK security type on the saved network
-  and the device can never reconnect (prima cannot do SAE).
-- `device/qcom/sepolicy-legacy` — `vendor_display_prop` marked
-  `vendor_public_prop` so apps' GL init can read it.
-
-Build `userdebug`; the sepolicy tree only relaxes neverallows for
-eng/userdebug.
+Flash the zip from TWRP. If you use Magisk, flash it again after every ROM
+update, since the update replaces the patched boot image.
 
 ## Kernel / vendor
 
-- Kernel: [android_kernel_huawei_kiwi](https://github.com/Shaheddan/android_kernel_huawei_kiwi) (lineage-19.1, **modified** — see above)
-- Vendor: TheMuppets `proprietary_vendor_huawei` with ELF-check
-  exemptions and the TZ keystore blob removed
+- Kernel: [android_kernel_huawei_kiwi](https://github.com/Shaheddan/android_kernel_huawei_kiwi)
+  (branch `lineage-20-ebpf`): 3.10.108 with eBPF, PSI, cgroup v2/kernfs,
+  FunctionFS AIO (adbd) and `IFA_FLAGS` netlink support backported, plus a
+  fix so SELinux labels cgroup2 inodes used in migration permission checks.
+- Vendor: [proprietary_vendor_huawei_kiwi](https://github.com/Shaheddan/proprietary_vendor_huawei_kiwi)
+  (branch `lineage-20`).
 
 ## Credits
 
-- LineageOS team (17.1 kiwi tree, msm8916 platform work)
-- [TipzTeam](https://codeberg.org/TipzTeam) — `sepolicy-legacy`,
-  msm8916-common and wt88047x trees, the main 19.1 references
-- niclimcy's wt88047x trees and the cyanogen/Motorola msm8916-common
-  trees, used as references throughout the original 18.1 port
+- LineageOS team (kiwi and msm8916 platform work)
+- acroreiser, whose LeEco Le 2 (s2) 3.10 kernel with eBPF/PSI backports was
+  the reference for this kernel's backports
+- The HTC One A9 (hiae) Android 13 tree, used as a boot reference
+- niclimcy's wt88047x trees and the cyanogen/Motorola msm8916-common trees,
+  used as references in earlier versions of this port
