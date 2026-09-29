@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  kiwi device, kernel, vendor and sepolicy for the Android 13 port.
+
+  WHY declared here rather than left as hand-copied directories: an unmanaged
+  directory is pruned by ANY repo sync, even one scoped to a single project.
+  That is what destroyed device/qcom/sepolicy-legacy and its local commits
+  during the 19.1 port.
+
+  All four track lineage-20, branched off the proven 19.1 commits. The
+  lineage-19.1 branches stay untouched as the working fallback.
+
+  sepolicy-legacy note: no lineage-20 branch exists upstream anywhere.
+  LineageOS stops at 16.0, TipzTeam's Codeberg has only 19.1. Our fork
+  carries commit cf54b87 on top of theirs.
+-->
+<manifest>
+
+  <remote name="shaheddan"
+          fetch="https://github.com/Shaheddan" />
+
+  <project path="device/huawei/kiwi"
+           name="android_device_huawei_kiwi"
+           remote="shaheddan" revision="lineage-20" />
+
+  <project path="kernel/huawei/kiwi"
+           name="android_kernel_huawei_kiwi"
+           remote="shaheddan" revision="lineage-20-ebpf" />
+
+  <project path="vendor/huawei/kiwi"
+           name="proprietary_vendor_huawei_kiwi"
+           remote="shaheddan" revision="lineage-20" />
+
+  <project path="device/qcom/sepolicy-legacy"
+           name="android_device_qcom_sepolicy-legacy"
+           remote="shaheddan" revision="lineage-20" />
+
+</manifest>

@@ -1,0 +1,90 @@
+From d185feafe41c3d71e5dc738dc03bb06957545546 Mon Sep 17 00:00:00 2001
+From: shahed <jamshidalinezhadian@gmail.com>
+Date: Wed, 23 Sep 2026 15:27:04 +0330
+Subject: [PATCH 2/2] netd: load bandwidth rules without -m bpf on kernels
+ without eBPF
+
+Android 13 made the pinned-eBPF iptables rules in BandwidthController
+unconditional. Kernels older than 4.9 cannot match them, so
+iptables-restore rejected the whole table and netd exit(1)ed by design,
+crash-looping behind the boot animation while system_server waited.
+Android 12 fell back to legacy rules on such kernels.
+
+When ro.kernel.ebpf.supported is false, drop just the four -m bpf rules
+so the chains and the rest of the ruleset load, and log instead of
+exiting if enableBandwidthControl still fails. Per-app accounting and
+Data Saver do not work without those rules; Data Saver must stay off.
+
+Change-Id: I0c22ec71f5d05d26e55a8bf8c7f82390dc7cf25f
+---
+ server/BandwidthController.cpp | 19 ++++++++++++++++++-
+ server/Controllers.cpp         |  9 ++++++++-
+ 2 files changed, 26 insertions(+), 2 deletions(-)
+
+diff --git a/server/BandwidthController.cpp b/server/BandwidthController.cpp
+index 8dba75a..6ac7aa2 100644
+--- a/server/BandwidthController.cpp
++++ b/server/BandwidthController.cpp
+@@ -50,6 +50,8 @@
+ #include <log/log.h>
+ 
+ #include <netdutils/Syscalls.h>
++#include <algorithm>
++#include <android-base/properties.h>
+ #include "BandwidthController.h"
+ #include "Controllers.h"
+ #include "FirewallController.h" /* For makeCriticalCommands */
+@@ -286,7 +288,22 @@ int BandwidthController::enableBandwidthControl() {
+ 
+     flushCleanTables(false);
+ 
+-    std::string commands = Join(getBasicAccountingCommands(), '\n');
++    std::vector<std::string> cmds = getBasicAccountingCommands();
++    // Kernels older than 4.9 (kiwi's 3.10) cannot match pinned eBPF objects
++    // (iptables: "Couldn't find match `bpf'"), so iptables-restore rejects the
++    // whole table and netd exits. Android 12 fell back to legacy rules on such
++    // kernels; Android 13 removed that. Drop only the -m bpf rules so the chains
++    // and the rest of the ruleset still load. Per-app accounting and Data Saver
++    // do not work without them, and the allowlist rule is one of them, so Data
++    // Saver must stay off on these devices.
++    if (!android::base::GetBoolProperty("ro.kernel.ebpf.supported", true)) {
++        cmds.erase(std::remove_if(cmds.begin(), cmds.end(),
++                                  [](const std::string& c) {
++                                      return c.find("-m bpf") != std::string::npos;
++                                  }),
++                   cmds.end());
++    }
++    std::string commands = Join(cmds, '\n');
+     return iptablesRestoreFunction(V4V6, commands, nullptr);
+ }
+ 
+diff --git a/server/Controllers.cpp b/server/Controllers.cpp
+index 00ee186..a7ec664 100644
+--- a/server/Controllers.cpp
++++ b/server/Controllers.cpp
+@@ -25,6 +25,7 @@
+ 
+ #define LOG_TAG "Netd"
+ #include <log/log.h>
++#include <android-base/properties.h>
+ 
+ #include "Controllers.h"
+ #include "IdletimerController.h"
+@@ -284,7 +285,13 @@ void Controllers::init() {
+         // As such simply exit netd.  This may crash loop the system, but by failing
+         // to bootup we will trigger rollback and thus this offers us protection against
+         // a mainline update breaking things.
+-        exit(1);
++        // Kernels without eBPF (kiwi's 3.10) cannot load the full ruleset. There,
++        // log and carry on rather than crash-loop the system behind the boot
++        // animation. BandwidthController already drops the -m bpf rules on such
++        // kernels, so reaching this means something else in the ruleset failed.
++        if (android::base::GetBoolProperty("ro.kernel.ebpf.supported", true)) {
++            exit(1);
++        }
+     }
+     gLog.info("Enabling bandwidth control: %" PRId64 "us", s.getTimeAndResetUs());
+ 
+-- 
+2.43.0
+

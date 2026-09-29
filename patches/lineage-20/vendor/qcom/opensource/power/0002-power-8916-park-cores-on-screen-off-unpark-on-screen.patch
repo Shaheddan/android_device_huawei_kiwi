@@ -1,0 +1,59 @@
+From b3e367efcc5c216e1e5bbb87ee0cf601870d96ad Mon Sep 17 00:00:00 2001
+From: shahed <jamshidalinezhadian@gmail.com>
+Date: Fri, 25 Sep 2026 08:31:49 +0330
+Subject: [PATCH 2/2] power: 8916: park cores on screen off, unpark on screen
+ on (msm8939)
+
+Screen on: all eight cores available (core_ctl min_cpus 4/4), since
+fewer online cores leave every task confined to them. Screen off: park
+them as stock did (fast cluster 0, efficient cluster 1).
+
+Change-Id: I908a863551cbeddb1b7a718cc10379dbbd6040f7
+---
+ power-8916.c | 20 ++++++++++++++++++++
+ 1 file changed, 20 insertions(+)
+
+diff --git a/power-8916.c b/power-8916.c
+index 51416a2..9118d6a 100644
+--- a/power-8916.c
++++ b/power-8916.c
+@@ -42,6 +42,7 @@
+ #include <hardware/hardware.h>
+ #include <hardware/power.h>
+ #include <log/log.h>
++#include <stdio.h>
+ 
+ #include "hint-data.h"
+ #include "metadata-defs.h"
+@@ -174,9 +175,28 @@ int power_hint_override(power_hint_t hint, void* data) {
+     return ret_val;
+ }
+ 
++/*
++ * msm8939 (kiwi): with the screen on keep all eight cores available; with
++ * fewer online, every task's allowed-CPU mask shrinks to the few online cores
++ * and the UI lags badly. Idle cores still power-collapse, so this costs little
++ * while the screen is on. With the screen off park them again as stock did:
++ * fast cluster (cpu0-3) fully off, at least one efficient core (cpu4-7).
++ */
++static void set_core_ctl_min_cpus(int fast, int efficient) {
++    char buf[4];
++
++    snprintf(buf, sizeof(buf), "%d", fast);
++    sysfs_write("/sys/devices/system/cpu/cpu0/core_ctl/min_cpus", buf);
++    snprintf(buf, sizeof(buf), "%d", efficient);
++    sysfs_write("/sys/devices/system/cpu/cpu4/core_ctl/min_cpus", buf);
++}
++
+ int set_interactive_override(int on) {
+     char governor[80];
+ 
++    /* First, before anything below can return early. */
++    if (!is_target_8916()) set_core_ctl_min_cpus(on ? 4 : 0, on ? 4 : 1);
++
+     if (get_scaling_governor(governor, sizeof(governor)) == -1) {
+         ALOGE("Can't obtain scaling governor.");
+         return HINT_NONE;
+-- 
+2.43.0
+

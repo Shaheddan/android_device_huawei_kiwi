@@ -1,0 +1,34 @@
+From c5488923c7142046ffb3a37e00149460d97b5a33 Mon Sep 17 00:00:00 2001
+From: shahed <jamshidalinezhadian@gmail.com>
+Date: Sat, 19 Sep 2026 21:17:06 +0330
+Subject: [PATCH 2/3] wifi: undef NAN before the HIDL headers in service.cpp
+
+The HIDL wifi enums IfaceType and RttPeerType have a member named NAN
+(Neighbour Awareness Networking), while bionic math.h defines NAN as
+__builtin_nanf(""). On Android 13 one of the system headers included by
+service.cpp pulls in math.h, so every IfaceType::NAN in the generated
+types.h expanded to a function call, giving 12 errors.
+
+Same fix and placement as the sibling files wifi_iface_util.cpp and
+wifi_feature_flags.cpp, and as AOSP's own wifi VTS tests.
+
+Change-Id: Id4400eae80374e34c5e6aafce5b5e8f54f19833b
+---
+ wifi/1.0-legacy/service.cpp | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/wifi/1.0-legacy/service.cpp b/wifi/1.0-legacy/service.cpp
+index 3f7f609..93b0664 100644
+--- a/wifi/1.0-legacy/service.cpp
++++ b/wifi/1.0-legacy/service.cpp
+@@ -20,6 +20,7 @@
+ #include <utils/Looper.h>
+ #include <utils/StrongPointer.h>
+ 
++#undef NAN  // NAN is defined in bionic/libc/include/math.h
+ #include "wifi.h"
+ #include "wifi_feature_flags.h"
+ #include "wifi_legacy_hal.h"
+-- 
+2.43.0
+

@@ -1,0 +1,44 @@
+From d2ecbf8d432d77dfc7d51e4a0ff11dbabe8a91b7 Mon Sep 17 00:00:00 2001
+From: shahed <jamshidalinezhadian@gmail.com>
+Date: Wed, 23 Sep 2026 07:27:56 +0330
+Subject: [PATCH] bpfloader: skip loading on kernels without eBPF
+
+Port of the Android 12 'Ignore bpf errors for < 4.9 kernels' patch.
+Kernels older than 4.9 have no bpf() syscall, so map creation returns
+ENOSYS, the loader and the Android 13 map self-test both fail, and init
+reboots with reboot,bpfloader-failed. When ro.kernel.ebpf.supported is
+false, skip all loading and the self-test but still set bpf.progs_loaded
+so services waiting on it proceed.
+---
+ bpfloader/BpfLoader.cpp | 15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
+
+diff --git a/bpfloader/BpfLoader.cpp b/bpfloader/BpfLoader.cpp
+index 5cd80b7..1afde41 100644
+--- a/bpfloader/BpfLoader.cpp
++++ b/bpfloader/BpfLoader.cpp
+@@ -178,6 +178,21 @@ int main(int argc, char** argv) {
+     (void)argc;
+     android::base::InitLogging(argv, &android::base::KernelLogger);
+ 
++    // Kernels older than 4.9 (kiwi's 3.10) have no bpf() syscall: map creation
++    // returns ENOSYS, so both the loader and the map self-test below fail and
++    // init reboots via reboot_on_failure. Such devices set
++    // ro.kernel.ebpf.supported=false: skip everything, but still publish
++    // bpf.progs_loaded so netd and others waiting on it can proceed.
++    // Ported from the Android 12 'Ignore bpf errors for < 4.9 kernels' patch.
++    if (!android::base::GetBoolProperty("ro.kernel.ebpf.supported", true)) {
++        ALOGI("eBPF not supported by this kernel, skipping BPF program loading");
++        if (android::base::SetProperty("bpf.progs_loaded", "1") == false) {
++            ALOGE("Failed to set bpf.progs_loaded property");
++            return 1;
++        }
++        return 0;
++    }
++
+     // Create all the pin subdirectories
+     // (this must be done first to allow selinux_context and pin_subdir functionality,
+     //  which could otherwise fail with ENOENT during object pinning or renaming,
+-- 
+2.43.0
+

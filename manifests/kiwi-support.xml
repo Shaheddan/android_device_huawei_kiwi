@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  qcom-caf audio, display and media for kiwi.
+
+  WHY 19.0 branches in a 20 tree: LineageOS carried the msm8916 CAF branch
+  only as far as lineage-19.0. From 19.1 onward only msm8953 exists, and
+  msm8916 maps to QCOM_HARDWARE_VARIANT=msm8916 through the final else in
+  BoardConfigQcom.mk, so the build still looks for hardware/qcom-caf/msm8916.
+
+  These are the newest msm8916 sources that exist. Whether they compile
+  against Android 13 platform headers is UNPROVEN; this is the experiment.
+-->
+<manifest>
+
+  <project path="hardware/qcom-caf/msm8916/audio"
+           name="LineageOS/android_hardware_qcom_audio"
+           groups="qcom,msm8916" revision="lineage-19.0-caf-msm8916" />
+
+  <project path="hardware/qcom-caf/msm8916/display"
+           name="LineageOS/android_hardware_qcom_display"
+           groups="qcom,msm8916" revision="lineage-19.0-caf-msm8916" />
+
+  <project path="hardware/qcom-caf/msm8916/media"
+           name="LineageOS/android_hardware_qcom_media"
+           groups="qcom,msm8916" revision="lineage-19.0-caf-msm8916" />
+
+
+
+  <remove-project name="LineageOS/android_hardware_qcom-caf_common" />
+
+  <project path="hardware/qcom-caf/common" name="LineageOS/android_hardware_qcom-caf_common" groups="qcom" >
+    <!-- add guard for AOSP hardware/qcom dir -->
+    <linkfile src="os_pickup_aosp.mk" dest="hardware/qcom/Android.mk" />
+    <!-- add guards for CAF repositories -->
+    <linkfile src="os_pickup_qssi.bp" dest="hardware/qcom-caf/msm8953/Android.bp" />
+    <linkfile src="os_pickup.mk" dest="hardware/qcom-caf/msm8953/Android.mk" />
+    <linkfile src="os_pickup.bp" dest="hardware/qcom-caf/msm8996/Android.bp" />
+    <linkfile src="os_pickup.mk" dest="hardware/qcom-caf/msm8996/Android.mk" />
+    <linkfile src="os_pickup.bp" dest="hardware/qcom-caf/msm8998/Android.bp" />
+    <linkfile src="os_pickup.mk" dest="hardware/qcom-caf/msm8998/Android.mk" />
+    <linkfile src="os_pickup_qssi.bp" dest="hardware/qcom-caf/sdm660/Android.bp" />
+    <linkfile src="os_pickup.mk" dest="hardware/qcom-caf/sdm660/Android.mk" />
+    <linkfile src="os_pickup_qssi.bp" dest="hardware/qcom-caf/sdm845/Android.bp" />
+    <linkfile src="os_pickup.mk" dest="hardware/qcom-caf/sdm845/Android.mk" />
+    <linkfile src="os_pickup_qssi.bp" dest="hardware/qcom-caf/sm8150/Android.bp" />
+    <linkfile src="os_pickup.mk" dest="hardware/qcom-caf/sm8150/Android.mk" />
+    <linkfile src="os_pickup_qssi.bp" dest="hardware/qcom-caf/sm8250/Android.bp" />
+    <linkfile src="os_pickup.mk" dest="hardware/qcom-caf/sm8250/Android.mk" />
+    <linkfile src="os_pickup_qssi.bp" dest="hardware/qcom-caf/sm8350/Android.bp" />
+    <linkfile src="os_pickup.mk" dest="hardware/qcom-caf/sm8350/Android.mk" />
+    <linkfile src="os_pickup_audio-ar.mk" dest="hardware/qcom-caf/sm8450/audio/Android.mk" />
+    <linkfile src="os_pickup_qssi.bp" dest="hardware/qcom-caf/sm8450/Android.bp" />
+    <linkfile src="os_pickup.mk" dest="hardware/qcom-caf/sm8450/Android.mk" />
+    <linkfile src="os_pickup_audio-ar.mk" dest="hardware/qcom-caf/sm8550/audio/Android.mk" />
+    <linkfile src="os_pickup_qssi.bp" dest="hardware/qcom-caf/sm8550/Android.bp" />
+    <linkfile src="os_pickup.mk" dest="hardware/qcom-caf/sm8550/Android.mk" />
+    <!-- add guards for Pixel kernel modules -->
+    <linkfile src="os_pickup.bp" dest="kernel/google/gs201/private/google-modules/Android.bp" />
+    <!-- kiwi: msm8916 is not in the upstream manifest, but
+         QCOM_HARDWARE_VARIANT resolves to it for TARGET_BOARD_PLATFORM=msm8916.
+         Plain os_pickup.bp, not _qssi, because kiwi is non-Treble. -->
+    <linkfile src="os_pickup.bp" dest="hardware/qcom-caf/msm8916/Android.bp" />
+    <linkfile src="os_pickup.mk" dest="hardware/qcom-caf/msm8916/Android.mk" />
+  </project>
+
+
+
+  <project path="system/tools/dtbtool"
+           name="LineageOS/android_system_tools_dtbtool"
+           remote="github" revision="lineage-18.1" />
+
+</manifest>

@@ -1,0 +1,63 @@
+From 39196a0cefa1e74aa7840832da65e28f84bd4d6f Mon Sep 17 00:00:00 2001
+From: shahed <jamshidalinezhadian@gmail.com>
+Date: Sat, 19 Sep 2026 20:30:39 +0330
+Subject: [PATCH 1/3] wifi: handle Wi-Fi 7 enum values in legacy converters
+
+Android 13 added WIFI_CHAN_WIDTH_320, WIFI_RTT_PREAMBLE_EHT and
+WIFI_RTT_BW_320 to the legacy wifi HAL enums. The three legacy-to-HIDL
+converters switched exhaustively over the old value sets and relied on a
+trailing CHECK(false), which is not a return, so both -Wswitch and
+-Wreturn-type fired under -Werror.
+
+Add a default label that breaks to the existing CHECK(false) and then
+returns a safe value. kiwi's prima chip has no Wi-Fi 7 support, so these
+values cannot occur in practice.
+
+Change-Id: Iacfa4bf63d6034660dc3db21e04d1bc4935ef89e
+---
+ wifi/1.0-legacy/hidl_struct_util.cpp | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/wifi/1.0-legacy/hidl_struct_util.cpp b/wifi/1.0-legacy/hidl_struct_util.cpp
+index ad2fdb2..1391307 100644
+--- a/wifi/1.0-legacy/hidl_struct_util.cpp
++++ b/wifi/1.0-legacy/hidl_struct_util.cpp
+@@ -2295,8 +2295,11 @@ WifiChannelWidthInMhz convertLegacyWifiChannelWidthToHidl(
+             return WifiChannelWidthInMhz::WIDTH_10;
+         case legacy_hal::WIFI_CHAN_WIDTH_INVALID:
+             return WifiChannelWidthInMhz::WIDTH_INVALID;
++        default:
++            break;
+     };
+     CHECK(false) << "Unknown legacy type: " << type;
++    return WifiChannelWidthInMhz::WIDTH_INVALID;
+ }
+ 
+ legacy_hal::wifi_rtt_preamble convertHidlRttPreambleToLegacy(RttPreamble type) {
+@@ -2323,8 +2326,11 @@ RttPreamble convertLegacyRttPreambleToHidl(legacy_hal::wifi_rtt_preamble type) {
+             return RttPreamble::VHT;
+         case legacy_hal::WIFI_RTT_PREAMBLE_HE:
+             return RttPreamble::HE;
++        default:
++            break;
+     };
+     CHECK(false) << "Unknown legacy type: " << type;
++    return RttPreamble::LEGACY;
+ }
+ 
+ legacy_hal::wifi_rtt_bw convertHidlRttBwToLegacy(RttBw type) {
+@@ -2359,8 +2365,11 @@ RttBw convertLegacyRttBwToHidl(legacy_hal::wifi_rtt_bw type) {
+             return RttBw::BW_80MHZ;
+         case legacy_hal::WIFI_RTT_BW_160:
+             return RttBw::BW_160MHZ;
++        default:
++            break;
+     };
+     CHECK(false) << "Unknown legacy type: " << type;
++    return RttBw::BW_20MHZ;
+ }
+ 
+ legacy_hal::wifi_motion_pattern convertHidlRttMotionPatternToLegacy(
+-- 
+2.43.0
+

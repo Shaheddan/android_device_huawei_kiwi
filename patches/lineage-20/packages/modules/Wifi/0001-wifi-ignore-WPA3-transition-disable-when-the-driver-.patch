@@ -1,0 +1,45 @@
+From f91881defe40f0d582365b8e5de767e8861d087c Mon Sep 17 00:00:00 2001
+From: shahed <jamshidalinezhadian@gmail.com>
+Date: Fri, 25 Sep 2026 14:36:23 +0330
+Subject: [PATCH] wifi: ignore WPA3 transition disable when the driver has no
+ SAE
+
+A WPA2/WPA3 transition-mode AP sends a transition disable indication
+(USE_WPA3_PERSONAL) on the first connection. Honouring it disables PSK
+and leaves the auto-upgraded SAE params as the only enabled security
+type; on a device whose driver cannot do SAE (kiwi's prima), the
+network then has no usable security params, SupplicantStaNetworkHal
+logs "No available security params." and it can never connect again.
+Drop the WPA3 Personal bit when WIFI_FEATURE_WPA3_SAE is not supported.
+
+Change-Id: I51ed72041be308680b13022fbb8b0e80b414803f
+---
+ .../java/com/android/server/wifi/ClientModeImpl.java | 12 +++++++++++-
+ 1 file changed, 11 insertions(+), 1 deletion(-)
+
+diff --git a/service/java/com/android/server/wifi/ClientModeImpl.java b/service/java/com/android/server/wifi/ClientModeImpl.java
+index 9ea7528..696acc5 100644
+--- a/service/java/com/android/server/wifi/ClientModeImpl.java
++++ b/service/java/com/android/server/wifi/ClientModeImpl.java
+@@ -5059,7 +5059,17 @@ public class ClientModeImpl extends StateMachine implements ClientMode {
+                 case WifiMonitor.TRANSITION_DISABLE_INDICATION: {
+                     log("Received TRANSITION_DISABLE_INDICATION: networkId=" + message.arg1
+                             + ", indication=" + message.arg2);
+-                    mWifiConfigManager.updateNetworkTransitionDisable(message.arg1, message.arg2);
++                    int indication = message.arg2;
++                    // A driver without WPA3/SAE (kiwi's prima) must not honour "use WPA3
++                    // Personal": it would disable PSK and leave SAE as the only enabled
++                    // security type, after which the network is never handed to
++                    // wpa_supplicant again ("No available security params").
++                    if ((indication & WifiMonitor.TDI_USE_WPA3_PERSONAL) != 0
++                            && (getSupportedFeatures() & WifiManager.WIFI_FEATURE_WPA3_SAE) == 0) {
++                        log("Ignoring WPA3 Personal transition disable: SAE not supported");
++                        indication &= ~WifiMonitor.TDI_USE_WPA3_PERSONAL;
++                    }
++                    mWifiConfigManager.updateNetworkTransitionDisable(message.arg1, indication);
+                     break;
+                 }
+                 case WifiMonitor.QOS_POLICY_RESET_EVENT: {
+-- 
+2.43.0
+

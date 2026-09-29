@@ -1,0 +1,95 @@
+From 74576d959c1939219c626e2b83d8a42f283b2b29 Mon Sep 17 00:00:00 2001
+From: shahed <jamshidalinezhadian@gmail.com>
+Date: Thu, 24 Sep 2026 00:50:31 +0330
+Subject: [PATCH] libnetworkstats: report stats unavailable on kernels without
+ eBPF
+
+All four public entry points open BPF maps with BpfMapRO's path
+constructor, which aborts when the map does not exist. On kernels older
+than 4.9 no map ever exists, so system_server aborted in
+bpfGetIfaceStats the first time Wi-Fi asked for interface counters, and
+crash-looped behind the boot animation.
+
+When ro.kernel.ebpf.supported is false, return -ENOSYS before touching
+any map. Callers already treat a non-zero return as no data, and the
+detail/dev parsers' failure becomes the IOException NetworkStatsService
+already catches.
+
+Change-Id: Idcfedf6b7cdb6fafa134e1343043806b79724461
+---
+ .../libs/libnetworkstats/BpfNetworkStats.cpp    | 17 +++++++++++++++++
+ 1 file changed, 17 insertions(+)
+
+diff --git a/service-t/native/libs/libnetworkstats/BpfNetworkStats.cpp b/service-t/native/libs/libnetworkstats/BpfNetworkStats.cpp
+index 9ebef4d..ea329ff 100644
+--- a/service-t/native/libs/libnetworkstats/BpfNetworkStats.cpp
++++ b/service-t/native/libs/libnetworkstats/BpfNetworkStats.cpp
+@@ -15,6 +15,7 @@
+  */
+ 
+ #include <inttypes.h>
++#include <errno.h>
+ #include <net/if.h>
+ #include <string.h>
+ #include <unordered_set>
+@@ -23,6 +24,7 @@
+ #include <utils/misc.h>
+ 
+ #include "android-base/file.h"
++#include "android-base/properties.h"
+ #include "android-base/strings.h"
+ #include "android-base/unique_fd.h"
+ #include "bpf/BpfMap.h"
+@@ -44,6 +46,17 @@ using base::Result;
+ // from the config value.
+ static constexpr char const* STATS_MAP_PATH[] = {STATS_MAP_B_PATH, STATS_MAP_A_PATH};
+ 
++// Kernels older than 4.9 (kiwi's 3.10) have no eBPF, so the maps opened below
++// never exist, and BpfMapRO's path constructor aborts rather than failing. That
++// took system_server down the first time Wi-Fi asked for interface counters.
++// Such devices set ro.kernel.ebpf.supported=false; report the stats as
++// unavailable instead. Callers already treat a non-zero return as no data.
++static bool ebpfSupported() {
++    static const bool supported =
++            android::base::GetBoolProperty("ro.kernel.ebpf.supported", true);
++    return supported;
++}
++
+ int bpfGetUidStatsInternal(uid_t uid, Stats* stats,
+                            const BpfMap<uint32_t, StatsValue>& appUidStatsMap) {
+     auto statsEntry = appUidStatsMap.readValue(uid);
+@@ -58,6 +71,7 @@ int bpfGetUidStatsInternal(uid_t uid, Stats* stats,
+ }
+ 
+ int bpfGetUidStats(uid_t uid, Stats* stats) {
++    if (!ebpfSupported()) return -ENOSYS;
+     BpfMapRO<uint32_t, StatsValue> appUidStatsMap(APP_UID_STATS_MAP_PATH);
+ 
+     if (!appUidStatsMap.isValid()) {
+@@ -100,6 +114,7 @@ int bpfGetIfaceStatsInternal(const char* iface, Stats* stats,
+ }
+ 
+ int bpfGetIfaceStats(const char* iface, Stats* stats) {
++    if (!ebpfSupported()) return -ENOSYS;
+     BpfMapRO<uint32_t, StatsValue> ifaceStatsMap(IFACE_STATS_MAP_PATH);
+     int ret;
+     if (!ifaceStatsMap.isValid()) {
+@@ -186,6 +201,7 @@ int parseBpfNetworkStatsDetailInternal(std::vector<stats_line>* lines,
+ int parseBpfNetworkStatsDetail(std::vector<stats_line>* lines,
+                                const std::vector<std::string>& limitIfaces, int limitTag,
+                                int limitUid) {
++    if (!ebpfSupported()) return -ENOSYS;
+     BpfMapRO<uint32_t, IfaceValue> ifaceIndexNameMap(IFACE_INDEX_NAME_MAP_PATH);
+     if (!ifaceIndexNameMap.isValid()) {
+         int ret = -errno;
+@@ -262,6 +278,7 @@ int parseBpfNetworkStatsDevInternal(std::vector<stats_line>* lines,
+ }
+ 
+ int parseBpfNetworkStatsDev(std::vector<stats_line>* lines) {
++    if (!ebpfSupported()) return -ENOSYS;
+     int ret = 0;
+     BpfMapRO<uint32_t, IfaceValue> ifaceIndexNameMap(IFACE_INDEX_NAME_MAP_PATH);
+     if (!ifaceIndexNameMap.isValid()) {
+-- 
+2.43.0
+

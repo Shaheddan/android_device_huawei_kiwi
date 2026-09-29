@@ -1,0 +1,35 @@
+From 99c8916b87b6beff026763d57a7b5e5e350bf1f6 Mon Sep 17 00:00:00 2001
+From: shahed <jamshidalinezhadian@gmail.com>
+Date: Sat, 19 Sep 2026 13:56:03 +0330
+Subject: [PATCH 2/2] lineage: restore msm8916 in QCOM_BOARD_PLATFORMS
+
+LineageOS 20 lists msm8937 as its oldest QCOM board platform. kiwi is
+msm8939 with TARGET_BOARD_PLATFORM := msm8916, and
+hardware/qcom-caf/msm8916/media/Android.mk gates its entire contents on
+is-board-platform-in-list $(QCOM_BOARD_PLATFORMS), so mm-core,
+libstagefrighthw, mm-video-v4l2 and libc2dcolorconvert were silently never
+built. That is the source of the libOmxCore / libmm-omxcore /
+libstagefrighthw entries in the missing-PRODUCT_PACKAGES list.
+
+Change-Id: Ib09b7788842600cd8f1e01ae3e6dc982361538b9
+---
+ build/core/vendor/qcom_boards.mk | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/build/core/vendor/qcom_boards.mk b/build/core/vendor/qcom_boards.mk
+index 33b6ecb..2f530dd 100644
+--- a/build/core/vendor/qcom_boards.mk
++++ b/build/core/vendor/qcom_boards.mk
+@@ -15,6 +15,9 @@ TARO := taro #SM8450
+ PARROT := parrot #SM6450
+ KALAMA := kalama #SM8550
+ 
++# Legacy, kept for kiwi (msm8939 uses TARGET_BOARD_PLATFORM := msm8916)
++QCOM_BOARD_PLATFORMS += msm8916
++
+ # UM Family
+ QCOM_BOARD_PLATFORMS += msm8937
+ QCOM_BOARD_PLATFORMS += msm8953
+-- 
+2.43.0
+

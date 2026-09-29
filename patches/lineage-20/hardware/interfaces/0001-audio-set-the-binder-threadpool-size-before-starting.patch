@@ -1,0 +1,39 @@
+From f78017f0c5b0159e94ff7f75b1dcb41fce0ca900 Mon Sep 17 00:00:00 2001
+From: shahed <jamshidalinezhadian@gmail.com>
+Date: Wed, 23 Sep 2026 13:18:32 +0330
+Subject: [PATCH] audio: set the binder threadpool size before starting it
+
+The service started the vndbinder threadpool and then called
+ABinderProcess_setThreadPoolMaxThreadCount(1). Both share one
+ProcessState, so that shrinks a running pool, which Android 13's
+libbinder rejects with 'Binder threadpool cannot be shrunk after
+starting', aborting the audio HAL on every start. Set the limit first.
+
+Change-Id: Id6f2008b7b57305c213c599e4db2b96212057be7
+---
+ audio/common/all-versions/default/service/service.cpp | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/audio/common/all-versions/default/service/service.cpp b/audio/common/all-versions/default/service/service.cpp
+index fbf6165..39910c8 100644
+--- a/audio/common/all-versions/default/service/service.cpp
++++ b/audio/common/all-versions/default/service/service.cpp
+@@ -76,10 +76,14 @@ int main(int /* argc */, char* /* argv */ []) {
+     signal(SIGPIPE, SIG_IGN);
+ 
+     ::android::ProcessState::initWithDriver("/dev/vndbinder");
++    // Android 13's libbinder aborts if a threadpool is shrunk after it has
++    // started. The NDK and libbinder pools share this ProcessState, so set
++    // the limit before the first startThreadPool(); the later
++    // ABinderProcess_startThreadPool() is then a no-op.
++    ABinderProcess_setThreadPoolMaxThreadCount(1);
+     // start a threadpool for vndbinder interactions
+     ::android::ProcessState::self()->startThreadPool();
+ 
+-    ABinderProcess_setThreadPoolMaxThreadCount(1);
+     ABinderProcess_startThreadPool();
+ 
+     const int32_t defaultValue = -1;
+-- 
+2.43.0
+

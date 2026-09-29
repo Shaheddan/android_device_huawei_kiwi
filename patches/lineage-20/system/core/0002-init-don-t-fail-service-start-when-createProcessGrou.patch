@@ -1,0 +1,51 @@
+From 2f7c0db8a406b6ef7b2b9b64400c90fda964a631 Mon Sep 17 00:00:00 2001
+From: shahed <jamshidalinezhadian@gmail.com>
+Date: Wed, 23 Sep 2026 02:18:01 +0330
+Subject: [PATCH 2/2] init: don't fail service start when createProcessGroup
+ fails
+
+Kernels without cgroup v2, such as kiwi's 3.10, can never create the
+per-uid/pid process group under /sys/fs/cgroup. Android 12 logged the
+failure and carried on, which ran fine on this kernel for the whole
+LineageOS 19.1 port. Android 13 made it fatal: the parent sends 0 on the
+notification pipe and returns an error, the child aborts, and init
+reboots to the bootloader because apexd-bootstrap cannot start.
+
+Restore the Android 12 behaviour: log the failure, skip memcg setup, and
+fall through so the child is released with byte 1 as on success.
+
+Change-Id: I6fc8f1e55654811c525e5b30cfd2c7f29715d04e
+---
+ init/service.cpp | 16 ++++++++--------
+ 1 file changed, 8 insertions(+), 8 deletions(-)
+
+diff --git a/init/service.cpp b/init/service.cpp
+index 7e43061..3a4c240 100644
+--- a/init/service.cpp
++++ b/init/service.cpp
+@@ -666,14 +666,14 @@ Result<void> Service::Start() {
+                       limit_percent_ != -1 || !limit_property_.empty();
+     errno = -createProcessGroup(proc_attr_.uid, pid_, use_memcg);
+     if (errno != 0) {
+-        if (char byte = 0; write((*pipefd)[1], &byte, 1) < 0) {
+-            return ErrnoError() << "sending notification failed";
+-        }
+-        return Error() << "createProcessGroup(" << proc_attr_.uid << ", " << pid_
+-                       << ") failed for service '" << name_ << "'";
+-    }
+-
+-    if (use_memcg) {
++        // Legacy kernels without cgroup v2 (kiwi's 3.10) can never create the
++        // per-uid/pid process group. Android 12 logged this and carried on,
++        // which is proven on this kernel; Android 13 made it fatal, so no
++        // service could start. Restore the Android 12 behaviour: log, skip
++        // memcg setup, and fall through so the child is released with byte 1.
++        PLOG(ERROR) << "createProcessGroup(" << proc_attr_.uid << ", " << pid_
++                    << ") failed for service '" << name_ << "'";
++    } else if (use_memcg) {
+         ConfigureMemcg();
+     }
+ 
+-- 
+2.43.0
+

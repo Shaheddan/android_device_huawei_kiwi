@@ -1,0 +1,46 @@
+From 3767bf927de66e656a218f04e91d7cad5b3fed85 Mon Sep 17 00:00:00 2001
+From: shahed <jamshidalinezhadian@gmail.com>
+Date: Wed, 23 Sep 2026 13:18:25 +0330
+Subject: [PATCH] gpuservice: skip GpuWork initialisation without eBPF
+
+On kernels older than 4.9 the GPU work BPF maps never exist, and the
+BpfMap path constructor aborts rather than failing, so gpuservice
+crash-looped in GpuWork::initialize(). Skip GPU work tracking when
+ro.kernel.ebpf.supported is false, matching bpfloader and netd.
+
+Change-Id: I2e0c7536390ec74f91b05080e87329b1ca8476fb
+---
+ services/gpuservice/gpuwork/GpuWork.cpp | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/services/gpuservice/gpuwork/GpuWork.cpp b/services/gpuservice/gpuwork/GpuWork.cpp
+index 974ae38..598816b 100644
+--- a/services/gpuservice/gpuwork/GpuWork.cpp
++++ b/services/gpuservice/gpuwork/GpuWork.cpp
+@@ -41,6 +41,7 @@
+ #include <unordered_map>
+ #include <unordered_set>
+ #include <vector>
++#include <android-base/properties.h>
+ 
+ #include "gpuwork/gpu_work.h"
+ 
+@@ -118,6 +119,15 @@ GpuWork::~GpuWork() {
+ }
+ 
+ void GpuWork::initialize() {
++    // Kernels older than 4.9 (kiwi's 3.10) have no eBPF, so these maps never
++    // exist, and the BpfMap path constructor aborts instead of failing,
++    // crash-looping gpuservice. Skip GPU work tracking entirely when
++    // ro.kernel.ebpf.supported is false, as bpfloader and netd do.
++    if (!android::base::GetBoolProperty("ro.kernel.ebpf.supported", true)) {
++        ALOGI("eBPF not supported by this kernel, GPU work tracking disabled");
++        return;
++    }
++
+     // Make sure BPF programs are loaded.
+     bpf::waitForProgsLoaded();
+ 
+-- 
+2.43.0
+
