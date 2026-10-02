@@ -1,0 +1,29 @@
+From 9bc90c6d146394faf5f5297e6b454a85224cc189 Mon Sep 17 00:00:00 2001
+From: shahed <jamshidalinezhadian@gmail.com>
+Date: Wed, 30 Sep 2026 07:29:25 +0330
+Subject: [PATCH] libandroidicu: allow kiwi's ICU 55 UConverter shim
+
+Huawei's kiwi blobs link ucnv_*_55; device/huawei/kiwi/libshims forwards them to libandroidicu. libicu has no UConverter API, which is exactly the case this allowlist is for.
+
+Change-Id: I105a7684eea3e60b46f7869609f30ec59ce1db0a
+---
+ libandroidicu/Android.bp | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/libandroidicu/Android.bp b/libandroidicu/Android.bp
+index 3224931..b87b1fe 100644
+--- a/libandroidicu/Android.bp
++++ b/libandroidicu/Android.bp
+@@ -99,6 +99,9 @@ cc_library_shared {
+         "//external/sqlite:__subpackages__",
+         "//external/sfntly",
+         "//frameworks/av/media/libmedia",
++        // kiwi: Huawei blobs call ICU 55 UConverter symbols (ucnv_*_55), which
++        // libshim_signinfolistener forwards; libicu exports no ucnv_* at all.
++        "//device/huawei/kiwi/libshims",
+     ],
+ }
+ 
+-- 
+2.43.0
+

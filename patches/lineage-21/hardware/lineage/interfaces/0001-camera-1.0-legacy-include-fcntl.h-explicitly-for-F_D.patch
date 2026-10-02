@@ -1,0 +1,27 @@
+From 8b34abe839cf271d897843e3f530e6e19b5ae63c Mon Sep 17 00:00:00 2001
+From: shahed <jamshidalinezhadian@gmail.com>
+Date: Sat, 25 Jul 2026 01:10:20 +0330
+Subject: [PATCH] camera: 1.0-legacy: include fcntl.h explicitly for
+ F_DUPFD_CLOEXEC
+
+Change-Id: I32fc458dae71ae172a14663db76df70cc2c9ae62
+---
+ camera/device/1.0-legacy/CameraDevice.cpp | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/camera/device/1.0-legacy/CameraDevice.cpp b/camera/device/1.0-legacy/CameraDevice.cpp
+index f324e45..6103ac0 100644
+--- a/camera/device/1.0-legacy/CameraDevice.cpp
++++ b/camera/device/1.0-legacy/CameraDevice.cpp
+@@ -15,6 +15,8 @@
+  */
+ 
+ #define LOG_TAG "CamDev@1.0-impl.legacy"
++#include <fcntl.h>
++
+ #include <hardware/camera.h>
+ #include <hardware/gralloc1.h>
+ #include <hidlmemory/mapping.h>
+-- 
+2.43.0
+

@@ -1,0 +1,40 @@
+From df3afc25c6cdedddd3a473510e6841a055b19878 Mon Sep 17 00:00:00 2001
+From: shahed <jamshidalinezhadian@gmail.com>
+Date: Wed, 30 Sep 2026 03:42:57 +0330
+Subject: [PATCH] sepolicy: qcom: rename hal_perf_default_exec too
+
+The m4 rename map already maps hal_perf_default to
+vendor_hal_perf_default for platforms outside the msm8937..sdm845 list,
+which includes kiwi (msm8916). init_daemon_domain() in sepolicy-legacy's
+hal_perf_default.te therefore emits rules against
+vendor_hal_perf_default_exec, while the type declaration on the preceding
+line stays hal_perf_default_exec because the map does not cover it.
+checkpolicy then fails with 'unknown type vendor_hal_perf_default_exec'.
+
+hal_keymaster_qti_exec is already renamed with its _exec suffix in this
+same list, so this just adds the matching entry.
+
+Change-Id: I7da323cae7529d266d916b3df5a812926f7f8b2b
+
+Ported to lineage-21.0: same line, surrounding context moved.
+
+Change-Id: I49f3d3ccde0f32c047c763996369f32d4048fecc
+---
+ qcom/sepolicy.mk | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/qcom/sepolicy.mk b/qcom/sepolicy.mk
+index def1dd1..d934e76 100644
+--- a/qcom/sepolicy.mk
++++ b/qcom/sepolicy.mk
+@@ -28,6 +28,7 @@ BOARD_SEPOLICY_M4DEFS += \
+     hal_gnss_qti=vendor_hal_gnss_qti \
+     hal_keymaster_qti_exec=vendor_hal_keymaster_qti_exec \
+     hal_perf_default=vendor_hal_perf_default \
++    hal_perf_default_exec=vendor_hal_perf_default_exec \
+     location_domain=vendor_location \
+     persist_block_device=vendor_persist_block_device \
+     qdisplay_service=vendor_qdisplay_service \
+-- 
+2.43.0
+
