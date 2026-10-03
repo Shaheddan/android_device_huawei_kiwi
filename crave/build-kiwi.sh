@@ -11,6 +11,14 @@
 VARIANT=${VARIANT:-eng}
 RAW=https://raw.githubusercontent.com/Shaheddan/android_device_huawei_kiwi/lineage-21
 
+# Crave has no LineageOS 21 project: the job runs in the LOS 22.1 workspace
+# (project 93) and is re-initialised to Crave's own LineageOS 21 manifest.
+# accupara/los21 has the same remotes and android-14.0.0_r67 tag as
+# LineageOS/android lineage-21.0, so kiwi's manifests and patches fit as-is.
+# -pixel-extra: same group filter as the local tree, keeps Pixel repos out.
+repo init -u https://github.com/accupara/los21.git -b lineage-21.0 --git-lfs -g default,-pixel-extra \
+  || { echo "!! repo init failed"; exit 1; }
+
 rm -rf .repo/local_manifests && mkdir -p .repo/local_manifests || exit 1
 for m in kiwi.xml kiwi-support.xml; do
   curl -sfL "$RAW/manifests/$m" -o ".repo/local_manifests/$m" || { echo "!! could not fetch $m"; exit 1; }
