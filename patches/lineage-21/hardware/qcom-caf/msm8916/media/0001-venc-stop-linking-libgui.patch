@@ -1,0 +1,46 @@
+From 43d55061ed08ee660e9f138a41df568618bf6630 Mon Sep 17 00:00:00 2001
+From: shahed <jamshidalinezhadian@gmail.com>
+Date: Sun, 4 Oct 2026 14:50:30 +0330
+Subject: [PATCH] venc: stop linking libgui
+
+Android 14 enforces vendor link types for every vendor module, and libgui.vendor is VNDK-private. No venc source includes any gui/ or ui/ header; the link was a leftover.
+
+Change-Id: Id985a87cb4f82ff723f00de0a73d3a8db7fe35c2
+---
+ mm-video-v4l2/vidc/venc/Android.mk | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/mm-video-v4l2/vidc/venc/Android.mk b/mm-video-v4l2/vidc/venc/Android.mk
+index 080282a..bfb6642 100644
+--- a/mm-video-v4l2/vidc/venc/Android.mk
++++ b/mm-video-v4l2/vidc/venc/Android.mk
+@@ -95,7 +95,7 @@ LOCAL_C_INCLUDES                := $(libmm-venc-inc)
+ 
+ LOCAL_PRELINK_MODULE      := false
+ LOCAL_SHARED_LIBRARIES    := liblog libutils libcutils \
+-                             libc2dcolorconvert libdl libgui
++                             libc2dcolorconvert libdl
+ LOCAL_SHARED_LIBRARIES += libqdMetaData
+ LOCAL_STATIC_LIBRARIES    := libOmxVidcCommon
+ 
+@@ -126,7 +126,7 @@ LOCAL_C_INCLUDES                := $(libmm-venc-inc)
+ 
+ LOCAL_PRELINK_MODULE      := false
+ LOCAL_SHARED_LIBRARIES    := liblog libutils libcutils \
+-                             libc2dcolorconvert libdl libgui
++                             libc2dcolorconvert libdl
+ LOCAL_SHARED_LIBRARIES    += libMpeg4SwEncoder
+ LOCAL_STATIC_LIBRARIES    := libOmxVidcCommon
+ 
+@@ -155,7 +155,7 @@ LOCAL_C_INCLUDES                := $(libmm-venc-inc)
+ 
+ LOCAL_PRELINK_MODULE      := false
+ LOCAL_SHARED_LIBRARIES    := liblog libutils libbinder libcutils \
+-                             libc2dcolorconvert libdl libgui
++                             libc2dcolorconvert libdl
+ LOCAL_SHARED_LIBRARIES    += libHevcSwEncoder
+ LOCAL_STATIC_LIBRARIES    := libOmxVidcCommon
+ 
+-- 
+2.43.0
+

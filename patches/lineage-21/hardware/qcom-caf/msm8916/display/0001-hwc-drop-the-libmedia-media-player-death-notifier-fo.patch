@@ -1,0 +1,103 @@
+From 56a994c1192b9a42559fa58e0711c0e087a34404 Mon Sep 17 00:00:00 2001
+From: shahed <jamshidalinezhadian@gmail.com>
+Date: Sun, 4 Oct 2026 14:50:29 +0330
+Subject: [PATCH] hwc: drop the libmedia media-player death notifier for
+ Android 14
+
+Android 14 enforces vendor link types for every vendor module, so hwcomposer.msm8916 may no longer link libmedia (native:platform). Its only use was IMediaDeathNotifier, which reset the secure-playback flags when mediaserver died; Qualcomm removed the same dependency from its later display HALs for Treble.
+
+Change-Id: I9eb2a4167f7126be004480ae29368f5938f2dfd9
+---
+ libhwcomposer/Android.mk      |  2 +-
+ libhwcomposer/hwc_qclient.cpp | 18 ++++--------------
+ libhwcomposer/hwc_qclient.h   | 10 ----------
+ 3 files changed, 5 insertions(+), 25 deletions(-)
+
+diff --git a/libhwcomposer/Android.mk b/libhwcomposer/Android.mk
+index 3bd29c5..4e5a19e 100644
+--- a/libhwcomposer/Android.mk
++++ b/libhwcomposer/Android.mk
+@@ -17,7 +17,7 @@ endif
+ LOCAL_SHARED_LIBRARIES        := $(common_libs) libEGL liboverlay \
+                                  libhdmi libqdutils libhardware_legacy \
+                                  libdl libmemalloc libqservice libsync \
+-                                 libbinder libmedia libbfqio
++                                 libbinder libbfqio
+ 
+ LOCAL_CFLAGS                  := $(common_flags) -DLOG_TAG=\"qdhwcomposer\" -Wno-absolute-value \
+                                  -Wno-float-conversion -Wno-unused-parameter
+diff --git a/libhwcomposer/hwc_qclient.cpp b/libhwcomposer/hwc_qclient.cpp
+index ee23da1..80d52cf 100644
+--- a/libhwcomposer/hwc_qclient.cpp
++++ b/libhwcomposer/hwc_qclient.cpp
+@@ -52,7 +52,6 @@ namespace qClient {
+ 
+ // ----------------------------------------------------------------------------
+ QClient::QClient(hwc_context_t *ctx) : mHwcContext(ctx),
+-        mMPDeathNotifier(new MPDeathNotifier(ctx)),
+         mCamDeathNotifier(new CamDeathNotifier())
+ {
+     ALOGD_IF(QCLIENT_DEBUG, "QClient Constructor invoked");
+@@ -64,9 +63,10 @@ QClient::~QClient()
+ }
+ 
+ static void securing(hwc_context_t *ctx, uint32_t startEnd) {
+-    //The only way to make this class in this process subscribe to media
+-    //player's death.
+-    IMediaDeathNotifier::getMediaPlayerService();
++    // kiwi: no media player death subscription any more. It came from libmedia's
++    // IMediaDeathNotifier, and Android 14 forbids vendor modules from linking
++    // libmedia. Trade-off: a mediaserver crash during secure playback no longer
++    // resets mSecuring/mSecureMode here; the next secure session sets them again.
+ 
+     ctx->mDrawLock.lock();
+     ctx->mSecuring = startEnd;
+@@ -91,16 +91,6 @@ static void unsecuring(hwc_context_t *ctx, uint32_t startEnd) {
+         ctx->proc->invalidate(ctx->proc);
+ }
+ 
+-void QClient::MPDeathNotifier::died() {
+-    mHwcContext->mDrawLock.lock();
+-    ALOGD_IF(QCLIENT_DEBUG, "Media Player died");
+-    mHwcContext->mSecuring = false;
+-    mHwcContext->mSecureMode = false;
+-    mHwcContext->mDrawLock.unlock();
+-    if(mHwcContext->proc)
+-        mHwcContext->proc->invalidate(mHwcContext->proc);
+-}
+-
+ static android::status_t screenRefresh(hwc_context_t *ctx) {
+     status_t result = NO_INIT;
+     if(ctx->proc) {
+diff --git a/libhwcomposer/hwc_qclient.h b/libhwcomposer/hwc_qclient.h
+index c1371f5..e58a611 100644
+--- a/libhwcomposer/hwc_qclient.h
++++ b/libhwcomposer/hwc_qclient.h
+@@ -35,7 +35,6 @@
+ #include <cutils/log.h>
+ #include <utils/RefBase.h>
+ #include <binder/IServiceManager.h>
+-#include <media/IMediaDeathNotifier.h>
+ #include <IQClient.h>
+ 
+ struct hwc_context_t;
+@@ -60,16 +59,7 @@ public:
+     };
+ 
+ private:
+-    //Notifies of Media Player death
+-    class MPDeathNotifier : public android::IMediaDeathNotifier {
+-    public:
+-        MPDeathNotifier(hwc_context_t* ctx) : mHwcContext(ctx){}
+-        virtual void died();
+-        hwc_context_t *mHwcContext;
+-    };
+-
+     hwc_context_t *mHwcContext;
+-    const android::sp<android::IMediaDeathNotifier> mMPDeathNotifier;
+     const android::sp<QClient::CamDeathNotifier>  mCamDeathNotifier;
+ };
+ }; // namespace qClient
+-- 
+2.43.0
+

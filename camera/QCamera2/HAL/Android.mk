@@ -14,6 +14,7 @@ LOCAL_SRC_FILES := \
     QCameraPostProc.cpp \
     QCamera2HWICallbacks.cpp \
     QCameraParameters.cpp \
+    CameraParametersVendor.cpp \
     QCameraThermalAdapter.cpp \
     wrapper/QualcommCamera.cpp
 
@@ -53,8 +54,11 @@ LOCAL_CFLAGS += -DTARGET_TS_MAKEUP
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/tsMakeuplib/include
 endif
 
+# kiwi: <camera/CameraParameters.h> used to come from libcamera_client's exported
+# headers; the class is now compiled in (CameraParametersVendor.cpp).
+LOCAL_C_INCLUDES += frameworks/av/camera/include
 LOCAL_HEADER_LIBRARIES := generated_kernel_headers
-LOCAL_SHARED_LIBRARIES := libcamera_client liblog libhardware libutils libcutils libdl
+LOCAL_SHARED_LIBRARIES := liblog libhardware libutils libcutils libdl
 LOCAL_SHARED_LIBRARIES += libmmcamera_interface libmmjpeg_interface libqdMetaData
 ifeq ($(TARGET_TS_MAKEUP),true)
 LOCAL_SHARED_LIBRARIES += libts_face_beautify_hal libts_detected_face_hal
