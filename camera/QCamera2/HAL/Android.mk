@@ -19,6 +19,9 @@ LOCAL_SRC_FILES := \
     wrapper/QualcommCamera.cpp
 
 LOCAL_CFLAGS += -Wall -Wextra -Werror
+# kiwi: QCamera2 predates Android 14, where String8::string()/isEmpty() became
+# private; libutils keeps them behind this official compatibility switch.
+LOCAL_CFLAGS += -DENABLE_STRING8_OBSOLETE_METHODS
 LOCAL_CFLAGS += -DHAS_MULTIMEDIA_HINTS
 
 #use media extension

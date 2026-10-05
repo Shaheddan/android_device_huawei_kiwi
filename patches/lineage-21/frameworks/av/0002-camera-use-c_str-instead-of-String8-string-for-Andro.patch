@@ -1,0 +1,321 @@
+From afbb35b1694968c26e178eba7dca14b23b3f092c Mon Sep 17 00:00:00 2001
+From: shahed <jamshidalinezhadian@gmail.com>
+Date: Mon, 5 Oct 2026 13:49:53 +0330
+Subject: [PATCH 2/2] camera: use c_str() instead of String8::string() for
+ Android 14
+
+String8: :string() is private in Android 14's libutils; the restored HALv1 code still used it.
+Change-Id: I44fc7669392e35cd53edfd08b78911f10154184b
+---
+ camera/Camera.cpp                             |  2 +-
+ .../libcameraservice/CameraFlashlight.cpp     |  8 +--
+ .../libcameraservice/api1/CameraClient.cpp    |  4 +-
+ .../device1/CameraHardwareInterface.cpp       | 54 +++++++++----------
+ 4 files changed, 34 insertions(+), 34 deletions(-)
+
+diff --git a/camera/Camera.cpp b/camera/Camera.cpp
+index aaca329..4a831ab 100644
+--- a/camera/Camera.cpp
++++ b/camera/Camera.cpp
+@@ -127,7 +127,7 @@ status_t Camera::connectLegacy(int cameraId, int halVersion,
+             default:
+                 status = -EINVAL;
+                 ALOGW("An error occurred while connecting to camera %d: %s", cameraId,
+-                        (cs != nullptr) ? "Service not available" : ret.toString8().string());
++                        (cs != nullptr) ? "Service not available" : ret.toString8().c_str());
+                 break;
+         }
+         c.clear();
+diff --git a/services/camera/libcameraservice/CameraFlashlight.cpp b/services/camera/libcameraservice/CameraFlashlight.cpp
+index 5012312..093694a 100644
+--- a/services/camera/libcameraservice/CameraFlashlight.cpp
++++ b/services/camera/libcameraservice/CameraFlashlight.cpp
+@@ -590,12 +590,12 @@ status_t CameraHardwareInterfaceFlashControl::initializePreviewWindow(
+ status_t CameraHardwareInterfaceFlashControl::connectCameraDevice(
+         const String8& cameraId) {
+     sp<CameraHardwareInterface> device =
+-            new CameraHardwareInterface(cameraId.string());
++            new CameraHardwareInterface(cameraId.c_str());
+ 
+     status_t res = device->initialize(mProviderManager);
+     if (res) {
+         ALOGE("%s: initializing camera %s failed", __FUNCTION__,
+-                cameraId.string());
++                cameraId.c_str());
+         return res;
+     }
+ 
+@@ -608,14 +608,14 @@ status_t CameraHardwareInterfaceFlashControl::connectCameraDevice(
+     res = getSmallestSurfaceSize(&width, &height);
+     if (res) {
+         ALOGE("%s: failed to get smallest surface size for camera %s",
+-                __FUNCTION__, cameraId.string());
++                __FUNCTION__, cameraId.c_str());
+         return res;
+     }
+ 
+     res = initializePreviewWindow(device, width, height);
+     if (res) {
+         ALOGE("%s: failed to initialize preview window for camera %s",
+-                __FUNCTION__, cameraId.string());
++                __FUNCTION__, cameraId.c_str());
+         return res;
+     }
+ 
+diff --git a/services/camera/libcameraservice/api1/CameraClient.cpp b/services/camera/libcameraservice/api1/CameraClient.cpp
+index 4a0affa..a926cfe 100644
+--- a/services/camera/libcameraservice/api1/CameraClient.cpp
++++ b/services/camera/libcameraservice/api1/CameraClient.cpp
+@@ -688,7 +688,7 @@ status_t CameraClient::takePicture(int msgType) {
+ 
+ // set preview/capture parameters - key/value pairs
+ status_t CameraClient::setParameters(const String8& params) {
+-    LOG1("setParameters (pid %d) (%s)", CameraThreadState::getCallingPid(), params.string());
++    LOG1("setParameters (pid %d) (%s)", CameraThreadState::getCallingPid(), params.c_str());
+ 
+     Mutex::Autolock lock(mLock);
+     status_t result = checkPidAndHardware();
+@@ -708,7 +708,7 @@ String8 CameraClient::getParameters() const {
+     }
+ 
+     String8 params(mHardware->getParameters().flatten());
+-    LOG1("getParameters (pid %d) (%s)", CameraThreadState::getCallingPid(), params.string());
++    LOG1("getParameters (pid %d) (%s)", CameraThreadState::getCallingPid(), params.c_str());
+     return params;
+ }
+ 
+diff --git a/services/camera/libcameraservice/device1/CameraHardwareInterface.cpp b/services/camera/libcameraservice/device1/CameraHardwareInterface.cpp
+index 62ef681..5c4ea9e 100644
+--- a/services/camera/libcameraservice/device1/CameraHardwareInterface.cpp
++++ b/services/camera/libcameraservice/device1/CameraHardwareInterface.cpp
+@@ -28,7 +28,7 @@ using hardware::hidl_handle;
+ 
+ CameraHardwareInterface::~CameraHardwareInterface()
+ {
+-    ALOGI("Destroying camera %s", mName.string());
++    ALOGI("Destroying camera %s", mName.c_str());
+     if (mHidlDevice != nullptr) {
+         mHidlDevice->close();
+         mHidlDevice.clear();
+@@ -37,9 +37,9 @@ CameraHardwareInterface::~CameraHardwareInterface()
+ }
+ 
+ status_t CameraHardwareInterface::initialize(sp<CameraProviderManager> manager) {
+-    ALOGI("Opening camera %s", mName.string());
++    ALOGI("Opening camera %s", mName.c_str());
+ 
+-    status_t ret = manager->openSession(mName.string(), this, &mHidlDevice);
++    status_t ret = manager->openSession(mName.c_str(), this, &mHidlDevice);
+     if (ret != OK) {
+         ALOGE("%s: openSession failed! %s (%d)", __FUNCTION__, strerror(-ret), ret);
+     }
+@@ -449,7 +449,7 @@ CameraHardwareInterface::setTimestamp(int64_t timestamp) {
+ 
+ status_t CameraHardwareInterface::setPreviewWindow(const sp<ANativeWindow>& buf)
+ {
+-    ALOGV("%s(%s) buf %p", __FUNCTION__, mName.string(), buf.get());
++    ALOGV("%s(%s) buf %p", __FUNCTION__, mName.c_str(), buf.get());
+     if (CC_LIKELY(mHidlDevice != nullptr)) {
+         mPreviewWindow = buf;
+         if (buf != nullptr) {
+@@ -478,12 +478,12 @@ void CameraHardwareInterface::setCallbacks(notify_callback notify_cb,
+     mDataCbTimestampBatch = data_cb_timestamp_batch;
+     mCbUser = user;
+ 
+-    ALOGV("%s(%s)", __FUNCTION__, mName.string());
++    ALOGV("%s(%s)", __FUNCTION__, mName.c_str());
+ }
+ 
+ void CameraHardwareInterface::enableMsgType(int32_t msgType)
+ {
+-    ALOGV("%s(%s)", __FUNCTION__, mName.string());
++    ALOGV("%s(%s)", __FUNCTION__, mName.c_str());
+     if (CC_LIKELY(mHidlDevice != nullptr)) {
+         mHidlDevice->enableMsgType(msgType);
+     }
+@@ -491,7 +491,7 @@ void CameraHardwareInterface::enableMsgType(int32_t msgType)
+ 
+ void CameraHardwareInterface::disableMsgType(int32_t msgType)
+ {
+-    ALOGV("%s(%s)", __FUNCTION__, mName.string());
++    ALOGV("%s(%s)", __FUNCTION__, mName.c_str());
+     if (CC_LIKELY(mHidlDevice != nullptr)) {
+         mHidlDevice->disableMsgType(msgType);
+     }
+@@ -499,7 +499,7 @@ void CameraHardwareInterface::disableMsgType(int32_t msgType)
+ 
+ int CameraHardwareInterface::msgTypeEnabled(int32_t msgType)
+ {
+-    ALOGV("%s(%s)", __FUNCTION__, mName.string());
++    ALOGV("%s(%s)", __FUNCTION__, mName.c_str());
+     if (CC_LIKELY(mHidlDevice != nullptr)) {
+         return mHidlDevice->msgTypeEnabled(msgType);
+     }
+@@ -508,7 +508,7 @@ int CameraHardwareInterface::msgTypeEnabled(int32_t msgType)
+ 
+ status_t CameraHardwareInterface::startPreview()
+ {
+-    ALOGV("%s(%s)", __FUNCTION__, mName.string());
++    ALOGV("%s(%s)", __FUNCTION__, mName.c_str());
+     if (CC_LIKELY(mHidlDevice != nullptr)) {
+         return CameraProviderManager::mapToStatusT(
+                 mHidlDevice->startPreview());
+@@ -518,7 +518,7 @@ status_t CameraHardwareInterface::startPreview()
+ 
+ void CameraHardwareInterface::stopPreview()
+ {
+-    ALOGV("%s(%s)", __FUNCTION__, mName.string());
++    ALOGV("%s(%s)", __FUNCTION__, mName.c_str());
+     if (CC_LIKELY(mHidlDevice != nullptr)) {
+         mHidlDevice->stopPreview();
+     }
+@@ -526,7 +526,7 @@ void CameraHardwareInterface::stopPreview()
+ 
+ int CameraHardwareInterface::previewEnabled()
+ {
+-    ALOGV("%s(%s)", __FUNCTION__, mName.string());
++    ALOGV("%s(%s)", __FUNCTION__, mName.c_str());
+     if (CC_LIKELY(mHidlDevice != nullptr)) {
+         return mHidlDevice->previewEnabled();
+     }
+@@ -535,7 +535,7 @@ int CameraHardwareInterface::previewEnabled()
+ 
+ status_t CameraHardwareInterface::storeMetaDataInBuffers(int enable)
+ {
+-    ALOGV("%s(%s)", __FUNCTION__, mName.string());
++    ALOGV("%s(%s)", __FUNCTION__, mName.c_str());
+     if (CC_LIKELY(mHidlDevice != nullptr)) {
+         return CameraProviderManager::mapToStatusT(
+                 mHidlDevice->storeMetaDataInBuffers(enable));
+@@ -545,7 +545,7 @@ status_t CameraHardwareInterface::storeMetaDataInBuffers(int enable)
+ 
+ status_t CameraHardwareInterface::startRecording()
+ {
+-    ALOGV("%s(%s)", __FUNCTION__, mName.string());
++    ALOGV("%s(%s)", __FUNCTION__, mName.c_str());
+     if (CC_LIKELY(mHidlDevice != nullptr)) {
+         return CameraProviderManager::mapToStatusT(
+                 mHidlDevice->startRecording());
+@@ -558,7 +558,7 @@ status_t CameraHardwareInterface::startRecording()
+  */
+ void CameraHardwareInterface::stopRecording()
+ {
+-    ALOGV("%s(%s)", __FUNCTION__, mName.string());
++    ALOGV("%s(%s)", __FUNCTION__, mName.c_str());
+     if (CC_LIKELY(mHidlDevice != nullptr)) {
+         mHidlDevice->stopRecording();
+     }
+@@ -569,7 +569,7 @@ void CameraHardwareInterface::stopRecording()
+  */
+ int CameraHardwareInterface::recordingEnabled()
+ {
+-    ALOGV("%s(%s)", __FUNCTION__, mName.string());
++    ALOGV("%s(%s)", __FUNCTION__, mName.c_str());
+     if (CC_LIKELY(mHidlDevice != nullptr)) {
+         return mHidlDevice->recordingEnabled();
+     }
+@@ -578,7 +578,7 @@ int CameraHardwareInterface::recordingEnabled()
+ 
+ void CameraHardwareInterface::releaseRecordingFrame(const sp<IMemory>& mem)
+ {
+-    ALOGV("%s(%s)", __FUNCTION__, mName.string());
++    ALOGV("%s(%s)", __FUNCTION__, mName.c_str());
+     ssize_t offset;
+     size_t size;
+     sp<IMemoryHeap> heap = mem->getMemory(&offset, &size);
+@@ -605,7 +605,7 @@ void CameraHardwareInterface::releaseRecordingFrame(const sp<IMemory>& mem)
+ 
+ void CameraHardwareInterface::releaseRecordingFrameBatch(const std::vector<sp<IMemory>>& frames)
+ {
+-    ALOGV("%s(%s)", __FUNCTION__, mName.string());
++    ALOGV("%s(%s)", __FUNCTION__, mName.c_str());
+     size_t n = frames.size();
+     std::vector<VideoFrameMessage> msgs;
+     msgs.reserve(n);
+@@ -644,7 +644,7 @@ void CameraHardwareInterface::releaseRecordingFrameBatch(const std::vector<sp<IM
+ 
+ status_t CameraHardwareInterface::autoFocus()
+ {
+-    ALOGV("%s(%s)", __FUNCTION__, mName.string());
++    ALOGV("%s(%s)", __FUNCTION__, mName.c_str());
+     if (CC_LIKELY(mHidlDevice != nullptr)) {
+         return CameraProviderManager::mapToStatusT(
+                 mHidlDevice->autoFocus());
+@@ -654,7 +654,7 @@ status_t CameraHardwareInterface::autoFocus()
+ 
+ status_t CameraHardwareInterface::cancelAutoFocus()
+ {
+-    ALOGV("%s(%s)", __FUNCTION__, mName.string());
++    ALOGV("%s(%s)", __FUNCTION__, mName.c_str());
+     if (CC_LIKELY(mHidlDevice != nullptr)) {
+         return CameraProviderManager::mapToStatusT(
+                 mHidlDevice->cancelAutoFocus());
+@@ -664,7 +664,7 @@ status_t CameraHardwareInterface::cancelAutoFocus()
+ 
+ status_t CameraHardwareInterface::takePicture()
+ {
+-    ALOGV("%s(%s)", __FUNCTION__, mName.string());
++    ALOGV("%s(%s)", __FUNCTION__, mName.c_str());
+     if (CC_LIKELY(mHidlDevice != nullptr)) {
+         return CameraProviderManager::mapToStatusT(
+                 mHidlDevice->takePicture());
+@@ -674,7 +674,7 @@ status_t CameraHardwareInterface::takePicture()
+ 
+ status_t CameraHardwareInterface::cancelPicture()
+ {
+-    ALOGV("%s(%s)", __FUNCTION__, mName.string());
++    ALOGV("%s(%s)", __FUNCTION__, mName.c_str());
+     if (CC_LIKELY(mHidlDevice != nullptr)) {
+         return CameraProviderManager::mapToStatusT(
+                 mHidlDevice->cancelPicture());
+@@ -684,17 +684,17 @@ status_t CameraHardwareInterface::cancelPicture()
+ 
+ status_t CameraHardwareInterface::setParameters(const CameraParameters &params)
+ {
+-    ALOGV("%s(%s)", __FUNCTION__, mName.string());
++    ALOGV("%s(%s)", __FUNCTION__, mName.c_str());
+     if (CC_LIKELY(mHidlDevice != nullptr)) {
+         return CameraProviderManager::mapToStatusT(
+-                mHidlDevice->setParameters(params.flatten().string()));
++                mHidlDevice->setParameters(params.flatten().c_str()));
+     }
+     return INVALID_OPERATION;
+ }
+ 
+ CameraParameters CameraHardwareInterface::getParameters() const
+ {
+-    ALOGV("%s(%s)", __FUNCTION__, mName.string());
++    ALOGV("%s(%s)", __FUNCTION__, mName.c_str());
+     CameraParameters parms;
+     if (CC_LIKELY(mHidlDevice != nullptr)) {
+         hardware::hidl_string outParam;
+@@ -710,7 +710,7 @@ CameraParameters CameraHardwareInterface::getParameters() const
+ 
+ status_t CameraHardwareInterface::sendCommand(int32_t cmd, int32_t arg1, int32_t arg2)
+ {
+-    ALOGV("%s(%s)", __FUNCTION__, mName.string());
++    ALOGV("%s(%s)", __FUNCTION__, mName.c_str());
+     if (CC_LIKELY(mHidlDevice != nullptr)) {
+         return CameraProviderManager::mapToStatusT(
+                 mHidlDevice->sendCommand((CommandType) cmd, arg1, arg2));
+@@ -723,7 +723,7 @@ status_t CameraHardwareInterface::sendCommand(int32_t cmd, int32_t arg1, int32_t
+  * *not* done in the destructor.
+  */
+ void CameraHardwareInterface::release() {
+-    ALOGV("%s(%s)", __FUNCTION__, mName.string());
++    ALOGV("%s(%s)", __FUNCTION__, mName.c_str());
+     if (CC_LIKELY(mHidlDevice != nullptr)) {
+         mHidlDevice->close();
+         mHidlDevice.clear();
+@@ -735,7 +735,7 @@ void CameraHardwareInterface::release() {
+  */
+ status_t CameraHardwareInterface::dump(int fd, const Vector<String16>& /*args*/) const
+ {
+-    ALOGV("%s(%s)", __FUNCTION__, mName.string());
++    ALOGV("%s(%s)", __FUNCTION__, mName.c_str());
+     if (CC_LIKELY(mHidlDevice != nullptr)) {
+         native_handle_t* handle = native_handle_create(1,0);
+         handle->data[0] = fd;
+-- 
+2.43.0
+

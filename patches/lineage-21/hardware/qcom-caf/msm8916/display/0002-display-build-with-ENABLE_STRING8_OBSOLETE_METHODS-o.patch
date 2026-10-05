@@ -1,0 +1,31 @@
+From 71b6d62470a9fbc2cabb6b886f0ca38b54fc7f71 Mon Sep 17 00:00:00 2001
+From: shahed <jamshidalinezhadian@gmail.com>
+Date: Mon, 5 Oct 2026 13:49:55 +0330
+Subject: [PATCH 2/2] display: build with ENABLE_STRING8_OBSOLETE_METHODS on
+ Android 14
+
+The msm8916 display HAL predates Android 14, where String8::string()/isEmpty() became private.
+
+Change-Id: Idfdf5960946d522eb410f89e3deca285cf7b73b4
+---
+ common.mk | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/common.mk b/common.mk
+index 54295f1..e21720e 100644
+--- a/common.mk
++++ b/common.mk
+@@ -43,4 +43,8 @@ common_flags += -isystem $(TARGET_OUT_HEADERS)/qcom/display
+ 
+ ifneq ($(call is-platform-sdk-version-at-least,18),true)
+     common_flags += -DANDROID_JELLYBEAN_MR1=1
+-endif
+\ No newline at end of file
++endif
++
++# kiwi: this display HAL predates Android 14, where String8::string() and
++# isEmpty() became private. libutils keeps them behind this official switch.
++common_flags += -DENABLE_STRING8_OBSOLETE_METHODS
+-- 
+2.43.0
+
