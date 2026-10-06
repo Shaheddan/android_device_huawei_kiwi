@@ -63,6 +63,9 @@ LOCAL_COPY_HEADERS:= \
 
 LOCAL_PRELINK_MODULE := false
 
+# kiwi: Android 14 builds every vendor module VNDK-style, without the old global
+# include dirs (libhardware, media plugin/OMX, EGL); request them explicitly.
+LOCAL_HEADER_LIBRARIES += libhardware_headers media_plugin_headers gl_headers
 include $(BUILD_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
@@ -114,6 +117,9 @@ LOCAL_C_INCLUDES:= \
 LOCAL_PRELINK_MODULE := false
 LOCAL_MODULE_RELATIVE_PATH := hw
 
+# kiwi: Android 14 builds every vendor module VNDK-style, without the old global
+# include dirs (libhardware, media plugin/OMX, EGL); request them explicitly.
+LOCAL_HEADER_LIBRARIES += libhardware_headers media_plugin_headers gl_headers
 include $(BUILD_SHARED_LIBRARY)
 
 endif # not BUILD_TINY_ANDROID

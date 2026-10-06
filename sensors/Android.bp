@@ -1,6 +1,8 @@
 cc_library_static {
     name: "multihal-kiwi",
     vendor: true,
+    // Android 14: vendor modules no longer get libhardware on the global include path.
+    header_libs: ["libhardware_headers"],
     srcs: [
         "multihal.cpp",
         "SensorEventQueue.cpp"

@@ -1,0 +1,164 @@
+From 85edbd9b244a93e8d72d1fb428fab30bee817daa Mon Sep 17 00:00:00 2001
+From: shahed <jamshidalinezhadian@gmail.com>
+Date: Wed, 7 Oct 2026 02:50:18 +0330
+Subject: [PATCH 2/2] media: request header libraries for Android 14
+
+Android 14 builds every vendor module VNDK-style, without the old global include directories (libhardware, media plugin/OMX, EGL). Request them explicitly as header libraries, which are harmless for modules that do not need them.
+
+Change-Id: I7d2908b4a00c6319ef5d6dc62ab6c052d381d4cf
+---
+ libc2dcolorconvert/Android.mk        | 3 +++
+ libstagefrighthw/Android.mk          | 3 +++
+ mm-core/Android.mk                   | 6 ++++++
+ mm-video-v4l2/vidc/common/Android.mk | 3 +++
+ mm-video-v4l2/vidc/test/Android.mk   | 3 +++
+ mm-video-v4l2/vidc/vdec/Android.mk   | 9 +++++++++
+ mm-video-v4l2/vidc/venc/Android.mk   | 9 +++++++++
+ 7 files changed, 36 insertions(+)
+
+diff --git a/libc2dcolorconvert/Android.mk b/libc2dcolorconvert/Android.mk
+index dab3e77..0dbcbc2 100644
+--- a/libc2dcolorconvert/Android.mk
++++ b/libc2dcolorconvert/Android.mk
+@@ -26,4 +26,7 @@ LOCAL_MODULE := libc2dcolorconvert
+ 
+ LOCAL_VENDOR_MODULE := true
+ 
++# kiwi: Android 14 builds every vendor module VNDK-style, without the old global
++# include dirs (libhardware, media plugin/OMX, EGL); request them explicitly.
++LOCAL_HEADER_LIBRARIES += libhardware_headers media_plugin_headers gl_headers
+ include $(BUILD_SHARED_LIBRARY)
+diff --git a/libstagefrighthw/Android.mk b/libstagefrighthw/Android.mk
+index 73261b6..884cbac 100644
+--- a/libstagefrighthw/Android.mk
++++ b/libstagefrighthw/Android.mk
+@@ -46,5 +46,8 @@ LOCAL_MODULE := libstagefrighthw
+ 
+ LOCAL_VENDOR_MODULE := true
+ 
++# kiwi: Android 14 builds every vendor module VNDK-style, without the old global
++# include dirs (libhardware, media plugin/OMX, EGL); request them explicitly.
++LOCAL_HEADER_LIBRARIES += libhardware_headers media_plugin_headers gl_headers
+ include $(BUILD_SHARED_LIBRARY)
+ 
+diff --git a/mm-core/Android.mk b/mm-core/Android.mk
+index 0f68e18..276a6ee 100644
+--- a/mm-core/Android.mk
++++ b/mm-core/Android.mk
+@@ -72,6 +72,9 @@ else
+ LOCAL_SRC_FILES         += src/$(MM_CORE_TARGET)/qc_registry_table_android.c
+ endif
+ 
++# kiwi: Android 14 builds every vendor module VNDK-style, without the old global
++# include dirs (libhardware, media plugin/OMX, EGL); request them explicitly.
++LOCAL_HEADER_LIBRARIES += libhardware_headers media_plugin_headers gl_headers
+ include $(BUILD_SHARED_LIBRARY)
+ 
+ include $(CLEAR_VARS)
+@@ -106,6 +109,9 @@ else
+ LOCAL_SRC_FILES         += src/$(MM_CORE_TARGET)/qc_registry_table.c
+ endif
+ 
++# kiwi: Android 14 builds every vendor module VNDK-style, without the old global
++# include dirs (libhardware, media plugin/OMX, EGL); request them explicitly.
++LOCAL_HEADER_LIBRARIES += libhardware_headers media_plugin_headers gl_headers
+ include $(BUILD_SHARED_LIBRARY)
+ 
+ endif #BUILD_TINY_ANDROID
+diff --git a/mm-video-v4l2/vidc/common/Android.mk b/mm-video-v4l2/vidc/common/Android.mk
+index 858d1eb..5dcbed6 100644
+--- a/mm-video-v4l2/vidc/common/Android.mk
++++ b/mm-video-v4l2/vidc/common/Android.mk
+@@ -40,6 +40,9 @@ LOCAL_SHARED_LIBRARIES    := liblog libutils libcutils libdl
+ LOCAL_SRC_FILES   := src/extra_data_handler.cpp
+ LOCAL_SRC_FILES   += src/vidc_color_converter.cpp
+ 
++# kiwi: Android 14 builds every vendor module VNDK-style, without the old global
++# include dirs (libhardware, media plugin/OMX, EGL); request them explicitly.
++LOCAL_HEADER_LIBRARIES += libhardware_headers media_plugin_headers gl_headers
+ include $(BUILD_STATIC_LIBRARY)
+ 
+ # ---------------------------------------------------------------------------------
+diff --git a/mm-video-v4l2/vidc/test/Android.mk b/mm-video-v4l2/vidc/test/Android.mk
+index fc61ed5..d39ab4c 100644
+--- a/mm-video-v4l2/vidc/test/Android.mk
++++ b/mm-video-v4l2/vidc/test/Android.mk
+@@ -11,4 +11,7 @@ LOCAL_SRC_FILES               += ring_queue.c
+ LOCAL_CFLAGS                  := -DLOG_TAG=\"MSM-VIDC-TEST\"
+ LOCAL_MODULE_TAGS             := optional
+ LOCAL_32_BIT_ONLY             := true
++# kiwi: Android 14 builds every vendor module VNDK-style, without the old global
++# include dirs (libhardware, media plugin/OMX, EGL); request them explicitly.
++LOCAL_HEADER_LIBRARIES += libhardware_headers media_plugin_headers gl_headers
+ include $(BUILD_EXECUTABLE)
+diff --git a/mm-video-v4l2/vidc/vdec/Android.mk b/mm-video-v4l2/vidc/vdec/Android.mk
+index aafde6d..15b5780 100644
+--- a/mm-video-v4l2/vidc/vdec/Android.mk
++++ b/mm-video-v4l2/vidc/vdec/Android.mk
+@@ -122,6 +122,9 @@ LOCAL_CLANG_CFLAGS      += -Wno-absolute-value -Wno-pointer-bool-conversion
+ 
+ LOCAL_CFLAGS            += -Wno-error
+ 
++# kiwi: Android 14 builds every vendor module VNDK-style, without the old global
++# include dirs (libhardware, media plugin/OMX, EGL); request them explicitly.
++LOCAL_HEADER_LIBRARIES += libhardware_headers media_plugin_headers gl_headers
+ include $(BUILD_SHARED_LIBRARY)
+ 
+ 
+@@ -167,6 +170,9 @@ LOCAL_STATIC_LIBRARIES  := libOmxVidcCommon
+ 
+ LOCAL_CFLAGS            += -Wno-error
+ 
++# kiwi: Android 14 builds every vendor module VNDK-style, without the old global
++# include dirs (libhardware, media plugin/OMX, EGL); request them explicitly.
++LOCAL_HEADER_LIBRARIES += libhardware_headers media_plugin_headers gl_headers
+ include $(BUILD_SHARED_LIBRARY)
+ 
+ endif
+@@ -195,6 +201,9 @@ LOCAL_SHARED_LIBRARIES        += libswvdec
+ LOCAL_SRC_FILES               := src/omx_swvdec.cpp
+ LOCAL_SRC_FILES               += src/omx_swvdec_utils.cpp
+ 
++# kiwi: Android 14 builds every vendor module VNDK-style, without the old global
++# include dirs (libhardware, media plugin/OMX, EGL); request them explicitly.
++LOCAL_HEADER_LIBRARIES += libhardware_headers media_plugin_headers gl_headers
+ include $(BUILD_SHARED_LIBRARY)
+ endif
+ endif
+diff --git a/mm-video-v4l2/vidc/venc/Android.mk b/mm-video-v4l2/vidc/venc/Android.mk
+index bfb6642..a4431a7 100644
+--- a/mm-video-v4l2/vidc/venc/Android.mk
++++ b/mm-video-v4l2/vidc/venc/Android.mk
+@@ -103,6 +103,9 @@ LOCAL_SRC_FILES   := src/omx_video_base.cpp
+ LOCAL_SRC_FILES   += src/omx_video_encoder.cpp
+ LOCAL_SRC_FILES   += src/video_encoder_device_v4l2.cpp
+ 
++# kiwi: Android 14 builds every vendor module VNDK-style, without the old global
++# include dirs (libhardware, media plugin/OMX, EGL); request them explicitly.
++LOCAL_HEADER_LIBRARIES += libhardware_headers media_plugin_headers gl_headers
+ include $(BUILD_SHARED_LIBRARY)
+ 
+ ifeq ($(BOARD_USES_QCOM_HARDWARE),true)
+@@ -133,6 +136,9 @@ LOCAL_STATIC_LIBRARIES    := libOmxVidcCommon
+ LOCAL_SRC_FILES   := src/omx_video_base.cpp
+ LOCAL_SRC_FILES   += src/omx_swvenc_mpeg4.cpp
+ 
++# kiwi: Android 14 builds every vendor module VNDK-style, without the old global
++# include dirs (libhardware, media plugin/OMX, EGL); request them explicitly.
++LOCAL_HEADER_LIBRARIES += libhardware_headers media_plugin_headers gl_headers
+ include $(BUILD_SHARED_LIBRARY)
+ endif
+ endif
+@@ -162,6 +168,9 @@ LOCAL_STATIC_LIBRARIES    := libOmxVidcCommon
+ LOCAL_SRC_FILES   := src/omx_video_base.cpp
+ LOCAL_SRC_FILES   += src/omx_swvenc_hevc.cpp
+ 
++# kiwi: Android 14 builds every vendor module VNDK-style, without the old global
++# include dirs (libhardware, media plugin/OMX, EGL); request them explicitly.
++LOCAL_HEADER_LIBRARIES += libhardware_headers media_plugin_headers gl_headers
+ include $(BUILD_SHARED_LIBRARY)
+ endif
+ 
+-- 
+2.43.0
+

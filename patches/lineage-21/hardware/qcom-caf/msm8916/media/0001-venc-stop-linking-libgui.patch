@@ -1,7 +1,7 @@
 From 43d55061ed08ee660e9f138a41df568618bf6630 Mon Sep 17 00:00:00 2001
 From: shahed <jamshidalinezhadian@gmail.com>
 Date: Sun, 4 Oct 2026 14:50:30 +0330
-Subject: [PATCH] venc: stop linking libgui
+Subject: [PATCH 1/2] venc: stop linking libgui
 
 Android 14 enforces vendor link types for every vendor module, and libgui.vendor is VNDK-private. No venc source includes any gui/ or ui/ header; the link was a leftover.
 

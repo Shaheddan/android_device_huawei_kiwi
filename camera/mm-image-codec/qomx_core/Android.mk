@@ -17,4 +17,7 @@ LOCAL_32_BIT_ONLY := true
 LOCAL_SHARED_LIBRARIES := libcutils libdl liblog
 LOCAL_VENDOR_MODULE := true
 
+# kiwi: Android 14 builds every vendor module VNDK-style, without the old global
+# include dirs (libhardware, media plugin/OMX, EGL); request them explicitly.
+LOCAL_HEADER_LIBRARIES += libhardware_headers media_plugin_headers gl_headers
 include $(BUILD_SHARED_LIBRARY)

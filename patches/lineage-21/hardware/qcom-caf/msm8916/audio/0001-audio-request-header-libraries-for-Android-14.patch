@@ -1,0 +1,139 @@
+From 0348ad5dad64b95d16beaee6bb43030cdddf933f Mon Sep 17 00:00:00 2001
+From: shahed <jamshidalinezhadian@gmail.com>
+Date: Wed, 7 Oct 2026 02:50:17 +0330
+Subject: [PATCH] audio: request header libraries for Android 14
+
+Android 14 builds every vendor module VNDK-style, without the old global include directories (libhardware, media plugin/OMX, EGL). Request them explicitly as header libraries, which are harmless for modules that do not need them.
+
+Change-Id: Ied5a5ca4097034f7de9b9c7b2fb4e933640c1cbd
+---
+ hal/Android.mk                         | 3 +++
+ mm-audio/aenc-aac/qdsp6/Android.mk     | 3 +++
+ mm-audio/aenc-amrnb/qdsp6/Android.mk   | 3 +++
+ mm-audio/aenc-evrc/qdsp6/Android.mk    | 3 +++
+ mm-audio/aenc-qcelp13/qdsp6/Android.mk | 3 +++
+ post_proc/Android.mk                   | 6 ++++++
+ visualizer/Android.mk                  | 3 +++
+ voice_processing/Android.mk            | 3 +++
+ 8 files changed, 27 insertions(+)
+
+diff --git a/hal/Android.mk b/hal/Android.mk
+index b131737..36b7d56 100644
+--- a/hal/Android.mk
++++ b/hal/Android.mk
+@@ -326,6 +326,9 @@ LOCAL_MODULE_TAGS := optional
+ 
+ LOCAL_VENDOR_MODULE := true
+ 
++# kiwi: Android 14 builds every vendor module VNDK-style, without the old global
++# include dirs (libhardware, media plugin/OMX, EGL); request them explicitly.
++LOCAL_HEADER_LIBRARIES += libhardware_headers media_plugin_headers gl_headers
+ include $(BUILD_SHARED_LIBRARY)
+ 
+ include $(CLEAR_VARS)
+diff --git a/mm-audio/aenc-aac/qdsp6/Android.mk b/mm-audio/aenc-aac/qdsp6/Android.mk
+index 5c95edd..f8f83b2 100644
+--- a/mm-audio/aenc-aac/qdsp6/Android.mk
++++ b/mm-audio/aenc-aac/qdsp6/Android.mk
+@@ -39,6 +39,9 @@ LOCAL_SRC_FILES         += src/omx_aac_aenc.cpp
+ 
+ LOCAL_HEADER_LIBRARIES := generated_kernel_headers media_headers
+ 
++# kiwi: Android 14 builds every vendor module VNDK-style, without the old global
++# include dirs (libhardware, media plugin/OMX, EGL); request them explicitly.
++LOCAL_HEADER_LIBRARIES += libhardware_headers media_plugin_headers gl_headers
+ include $(BUILD_SHARED_LIBRARY)
+ 
+ endif
+diff --git a/mm-audio/aenc-amrnb/qdsp6/Android.mk b/mm-audio/aenc-amrnb/qdsp6/Android.mk
+index 5682b95..edbdd66 100644
+--- a/mm-audio/aenc-amrnb/qdsp6/Android.mk
++++ b/mm-audio/aenc-amrnb/qdsp6/Android.mk
+@@ -39,6 +39,9 @@ LOCAL_SRC_FILES         += src/omx_amr_aenc.cpp
+ 
+ LOCAL_HEADER_LIBRARIES := generated_kernel_headers media_headers
+ 
++# kiwi: Android 14 builds every vendor module VNDK-style, without the old global
++# include dirs (libhardware, media plugin/OMX, EGL); request them explicitly.
++LOCAL_HEADER_LIBRARIES += libhardware_headers media_plugin_headers gl_headers
+ include $(BUILD_SHARED_LIBRARY)
+ 
+ endif
+diff --git a/mm-audio/aenc-evrc/qdsp6/Android.mk b/mm-audio/aenc-evrc/qdsp6/Android.mk
+index f762c98..4289861 100644
+--- a/mm-audio/aenc-evrc/qdsp6/Android.mk
++++ b/mm-audio/aenc-evrc/qdsp6/Android.mk
+@@ -39,6 +39,9 @@ LOCAL_SRC_FILES         += src/omx_evrc_aenc.cpp
+ 
+ LOCAL_HEADER_LIBRARIES := generated_kernel_headers media_headers
+ 
++# kiwi: Android 14 builds every vendor module VNDK-style, without the old global
++# include dirs (libhardware, media plugin/OMX, EGL); request them explicitly.
++LOCAL_HEADER_LIBRARIES += libhardware_headers media_plugin_headers gl_headers
+ include $(BUILD_SHARED_LIBRARY)
+ 
+ endif
+diff --git a/mm-audio/aenc-qcelp13/qdsp6/Android.mk b/mm-audio/aenc-qcelp13/qdsp6/Android.mk
+index 32d82a1..d961dde 100644
+--- a/mm-audio/aenc-qcelp13/qdsp6/Android.mk
++++ b/mm-audio/aenc-qcelp13/qdsp6/Android.mk
+@@ -39,6 +39,9 @@ LOCAL_SRC_FILES         += src/omx_qcelp13_aenc.cpp
+ 
+ LOCAL_HEADER_LIBRARIES := generated_kernel_headers media_headers
+ 
++# kiwi: Android 14 builds every vendor module VNDK-style, without the old global
++# include dirs (libhardware, media plugin/OMX, EGL); request them explicitly.
++LOCAL_HEADER_LIBRARIES += libhardware_headers media_plugin_headers gl_headers
+ include $(BUILD_SHARED_LIBRARY)
+ 
+ endif
+diff --git a/post_proc/Android.mk b/post_proc/Android.mk
+index 8e23777..bbf69f1 100644
+--- a/post_proc/Android.mk
++++ b/post_proc/Android.mk
+@@ -60,6 +60,9 @@ LOCAL_C_INCLUDES := \
+ 	external/tinyalsa/include \
+ 	$(call include-path-for, audio-effects)
+ 
++# kiwi: Android 14 builds every vendor module VNDK-style, without the old global
++# include dirs (libhardware, media plugin/OMX, EGL); request them explicitly.
++LOCAL_HEADER_LIBRARIES += libhardware_headers media_plugin_headers gl_headers
+ include $(BUILD_SHARED_LIBRARY)
+ 
+ ifeq ($(strip $(AUDIO_FEATURE_ENABLED_HW_ACCELERATED_EFFECTS)),true)
+@@ -85,5 +88,8 @@ endif
+ LOCAL_MODULE:= libhwacceffectswrapper
+ LOCAL_VENDOR_MODULE := true
+ 
++# kiwi: Android 14 builds every vendor module VNDK-style, without the old global
++# include dirs (libhardware, media plugin/OMX, EGL); request them explicitly.
++LOCAL_HEADER_LIBRARIES += libhardware_headers media_plugin_headers gl_headers
+ include $(BUILD_STATIC_LIBRARY)
+ endif
+diff --git a/visualizer/Android.mk b/visualizer/Android.mk
+index bf22fbc..0be7bbd 100644
+--- a/visualizer/Android.mk
++++ b/visualizer/Android.mk
+@@ -40,4 +40,7 @@ LOCAL_C_INCLUDES := \
+ 	external/tinyalsa/include \
+ 	$(call include-path-for, audio-effects)
+ 
++# kiwi: Android 14 builds every vendor module VNDK-style, without the old global
++# include dirs (libhardware, media plugin/OMX, EGL); request them explicitly.
++LOCAL_HEADER_LIBRARIES += libhardware_headers media_plugin_headers gl_headers
+ include $(BUILD_SHARED_LIBRARY)
+diff --git a/voice_processing/Android.mk b/voice_processing/Android.mk
+index 15ae385..88d0452 100644
+--- a/voice_processing/Android.mk
++++ b/voice_processing/Android.mk
+@@ -27,4 +27,7 @@ LOCAL_SHARED_LIBRARIES += libdl
+ 
+ LOCAL_CFLAGS += -fvisibility=hidden
+ 
++# kiwi: Android 14 builds every vendor module VNDK-style, without the old global
++# include dirs (libhardware, media plugin/OMX, EGL); request them explicitly.
++LOCAL_HEADER_LIBRARIES += libhardware_headers media_plugin_headers gl_headers
+ include $(BUILD_SHARED_LIBRARY)
+-- 
+2.43.0
+
