@@ -1,0 +1,139 @@
+From 94fae08a281b5c46b9d84ed8d3f15c353129ac13 Mon Sep 17 00:00:00 2001
+From: shahed <jamshidalinezhadian@gmail.com>
+Date: Tue, 6 Oct 2026 12:39:40 +0330
+Subject: [PATCH 3/3] display: add gl_headers for Android 14
+
+Android 14 no longer provides frameworks/native/opengl/include to vendor modules by default, so libqdutils (via hwc_utils.h) failed on <EGL/egl.h>. gl_headers is the vendor-available header library exporting it.
+
+Change-Id: Ida3ca600f49f900a444af702155b17fe3a197667
+---
+ libcopybit/Android.mk    | 2 +-
+ libgralloc/Android.mk    | 4 ++--
+ libhdmi/Android.mk       | 2 +-
+ libhwcomposer/Android.mk | 2 +-
+ liboverlay/Android.mk    | 2 +-
+ libqdutils/Android.mk    | 6 +++---
+ libqservice/Android.mk   | 2 +-
+ 7 files changed, 10 insertions(+), 10 deletions(-)
+
+diff --git a/libcopybit/Android.mk b/libcopybit/Android.mk
+index 5e9a112..1b94d82 100644
+--- a/libcopybit/Android.mk
++++ b/libcopybit/Android.mk
+@@ -22,7 +22,7 @@ LOCAL_VENDOR_MODULE           := true
+ LOCAL_MODULE_TAGS             := optional
+ LOCAL_SHARED_LIBRARIES        := $(common_libs) libdl libmemalloc
+ LOCAL_CFLAGS                  := $(common_flags) -DLOG_TAG=\"qdcopybit\"
+-LOCAL_HEADER_LIBRARIES        := generated_kernel_headers display_headers
++LOCAL_HEADER_LIBRARIES        := generated_kernel_headers display_headers gl_headers
+ 
+ ifeq ($(TARGET_USES_C2D_COMPOSITION),true)
+     LOCAL_CFLAGS += -DCOPYBIT_Z180=1 -DC2D_SUPPORT_DISPLAY=1
+diff --git a/libgralloc/Android.mk b/libgralloc/Android.mk
+index c8970c3..055d32c 100644
+--- a/libgralloc/Android.mk
++++ b/libgralloc/Android.mk
+@@ -24,7 +24,7 @@ LOCAL_MODULE_TAGS             := optional
+ LOCAL_SHARED_LIBRARIES        := $(common_libs) libmemalloc libqdMetaData
+ LOCAL_SHARED_LIBRARIES        += libqdutils libGLESv1_CM
+ LOCAL_CFLAGS                  := $(common_flags) -DLOG_TAG=\"qdgralloc\"
+-LOCAL_HEADER_LIBRARIES        := generated_kernel_headers display_headers
++LOCAL_HEADER_LIBRARIES        := generated_kernel_headers display_headers gl_headers
+ LOCAL_SRC_FILES               := gpu.cpp gralloc.cpp framebuffer.cpp mapper.cpp
+ 
+ include $(BUILD_SHARED_LIBRARY)
+@@ -37,7 +37,7 @@ LOCAL_MODULE_TAGS             := optional
+ LOCAL_VENDOR_MODULE           := true
+ LOCAL_SHARED_LIBRARIES        := $(common_libs) libqdutils libdl
+ LOCAL_CFLAGS                  := $(common_flags) -DLOG_TAG=\"qdmemalloc\"
+-LOCAL_HEADER_LIBRARIES        := generated_kernel_headers display_headers
++LOCAL_HEADER_LIBRARIES        := generated_kernel_headers display_headers gl_headers
+ LOCAL_SRC_FILES               := ionalloc.cpp alloc_controller.cpp
+ 
+ ifeq ($(TARGET_USE_COMPAT_GRALLOC_ALIGN),true)
+diff --git a/libhdmi/Android.mk b/libhdmi/Android.mk
+index fefa924..50ba9fd 100644
+--- a/libhdmi/Android.mk
++++ b/libhdmi/Android.mk
+@@ -7,7 +7,7 @@ LOCAL_MODULE_TAGS             := optional
+ LOCAL_VENDOR_MODULE           := true
+ LOCAL_SHARED_LIBRARIES        := $(common_libs) liboverlay libqdutils
+ LOCAL_CFLAGS                  := $(common_flags) -DLOG_TAG=\"qdhdmi\" -Wno-float-conversion -Wno-format
+-LOCAL_HEADER_LIBRARIES        := generated_kernel_headers display_headers
++LOCAL_HEADER_LIBRARIES        := generated_kernel_headers display_headers gl_headers
+ LOCAL_SRC_FILES               := hdmi.cpp
+ 
+ include $(BUILD_SHARED_LIBRARY)
+diff --git a/libhwcomposer/Android.mk b/libhwcomposer/Android.mk
+index 4e5a19e..945b4a5 100644
+--- a/libhwcomposer/Android.mk
++++ b/libhwcomposer/Android.mk
+@@ -35,7 +35,7 @@ ifeq ($(VSYNC_EVENT_PHASE_OFFSET_NS),)
+     LOCAL_CFLAGS += -DDYNAMIC_FPS
+ endif
+ 
+-LOCAL_HEADER_LIBRARIES        := generated_kernel_headers display_headers
++LOCAL_HEADER_LIBRARIES        := generated_kernel_headers display_headers gl_headers
+ LOCAL_SRC_FILES               := hwc.cpp          \
+                                  hwc_utils.cpp    \
+                                  hwc_uevents.cpp  \
+diff --git a/liboverlay/Android.mk b/liboverlay/Android.mk
+index f2f8f9e..bda6a97 100644
+--- a/liboverlay/Android.mk
++++ b/liboverlay/Android.mk
+@@ -8,7 +8,7 @@ LOCAL_VENDOR_MODULE           := true
+ LOCAL_SHARED_LIBRARIES        := $(common_libs) libqdutils libmemalloc \
+                                  libsync libdl
+ LOCAL_CFLAGS                  := $(common_flags) -DLOG_TAG=\"qdoverlay\"
+-LOCAL_HEADER_LIBRARIES        := generated_kernel_headers display_headers
++LOCAL_HEADER_LIBRARIES        := generated_kernel_headers display_headers gl_headers
+ LOCAL_SRC_FILES := \
+       overlay.cpp \
+       overlayUtils.cpp \
+diff --git a/libqdutils/Android.mk b/libqdutils/Android.mk
+index bd2781a..ce2d21f 100644
+--- a/libqdutils/Android.mk
++++ b/libqdutils/Android.mk
+@@ -7,7 +7,7 @@ LOCAL_MODULE_TAGS             := optional
+ LOCAL_VENDOR_MODULE           := true
+ LOCAL_SHARED_LIBRARIES        := $(common_libs) libui libbinder libqservice
+ LOCAL_CFLAGS                  := $(common_flags) -DLOG_TAG=\"qdutils\" -Wno-float-conversion
+-LOCAL_HEADER_LIBRARIES        := generated_kernel_headers display_headers
++LOCAL_HEADER_LIBRARIES        := generated_kernel_headers display_headers gl_headers
+ LOCAL_SRC_FILES               := profiler.cpp mdp_version.cpp \
+                                  idle_invalidator.cpp \
+                                  comptype.cpp qd_utils.cpp \
+@@ -18,7 +18,7 @@ include $(BUILD_SHARED_LIBRARY)
+ include $(CLEAR_VARS)
+ 
+ LOCAL_SHARED_LIBRARIES          := liblog libcutils
+-LOCAL_HEADER_LIBRARIES          := generated_kernel_headers display_headers
++LOCAL_HEADER_LIBRARIES          := generated_kernel_headers display_headers gl_headers
+ LOCAL_SRC_FILES                 := qdMetaData.cpp qd_utils.cpp
+ LOCAL_CFLAGS                    := $(common_flags)
+ LOCAL_CFLAGS                    += -DLOG_TAG=\"DisplayMetaData\"
+@@ -31,7 +31,7 @@ include $(BUILD_SHARED_LIBRARY)
+ include $(CLEAR_VARS)
+ 
+ LOCAL_SHARED_LIBRARIES          := liblog libcutils
+-LOCAL_HEADER_LIBRARIES          := generated_kernel_headers display_headers
++LOCAL_HEADER_LIBRARIES          := generated_kernel_headers display_headers gl_headers
+ LOCAL_SRC_FILES                 := qdMetaData.cpp qd_utils.cpp
+ LOCAL_CFLAGS                    := $(common_flags) -Wno-sign-conversion
+ LOCAL_CFLAGS                    += -DLOG_TAG=\"DisplayMetaData\"
+diff --git a/libqservice/Android.mk b/libqservice/Android.mk
+index 3ba00ef..bb06289 100644
+--- a/libqservice/Android.mk
++++ b/libqservice/Android.mk
+@@ -7,7 +7,7 @@ LOCAL_MODULE_TAGS             := optional
+ LOCAL_VENDOR_MODULE           := true
+ LOCAL_SHARED_LIBRARIES        := $(common_libs) libbinder
+ LOCAL_CFLAGS                  := $(common_flags) -DLOG_TAG=\"qdqservice\"
+-LOCAL_HEADER_LIBRARIES        := generated_kernel_headers display_headers
++LOCAL_HEADER_LIBRARIES        := generated_kernel_headers display_headers gl_headers
+ LOCAL_SRC_FILES               := QService.cpp \
+                                  IQService.cpp \
+                                  IQClient.cpp
+-- 
+2.43.0
+
