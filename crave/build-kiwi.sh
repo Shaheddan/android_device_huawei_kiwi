@@ -29,4 +29,6 @@ bash device/huawei/kiwi/patches/apply-patches.sh lineage-21 || { echo "!! kiwi p
 
 source build/envsetup.sh
 lunch "lineage_kiwi-ap2a-$VARIANT" || { echo "!! lunch failed"; exit 1; }
-mka bacon
+# -k (keep going): every Crave round costs hours of queue time, so one failed
+# build should report every independent compile error, not just the first.
+mka bacon -k
