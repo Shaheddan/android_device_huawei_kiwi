@@ -1,7 +1,7 @@
 From d6d71468ed69a536d6eec73bb72649c0402bb65b Mon Sep 17 00:00:00 2001
 From: shahed <jamshidalinezhadian@gmail.com>
 Date: Wed, 30 Sep 2026 04:27:14 +0330
-Subject: [PATCH] camera: restore HALv1 support on Android 13 (2/2)
+Subject: [PATCH 1/2] camera: restore HALv1 support on Android 13 (2/2)
 
 Port of 'Camera: Restore camera HALv1 support [2/2]': the camera2
 legacy shim (android.hardware.camera2.legacy + JNI), CameraManager

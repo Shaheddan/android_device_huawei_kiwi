@@ -1,0 +1,31 @@
+From 707064cdd8c895fffb40e74e7a5a01e8dfec756a Mon Sep 17 00:00:00 2001
+From: shahed <jamshidalinezhadian@gmail.com>
+Date: Wed, 7 Oct 2026 18:10:26 +0330
+Subject: [PATCH 2/2] camera: jni: pass a String16 package name to
+ connectLegacy()
+
+Android 14's JNI converts the client package name to std::string; the restored HALv1 connectLegacy() still takes String16 for the legacy AIDL call.
+
+Change-Id: I0e7e5265b0a1ce229949752b866d64a7f58770ca
+---
+ core/jni/android_hardware_Camera.cpp | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/core/jni/android_hardware_Camera.cpp b/core/jni/android_hardware_Camera.cpp
+index 7b7248d1f..e70e71426 100644
+--- a/core/jni/android_hardware_Camera.cpp
++++ b/core/jni/android_hardware_Camera.cpp
+@@ -575,7 +575,9 @@ static jint android_hardware_Camera_native_setup(JNIEnv *env, jobject thiz, jobj
+                                  forceSlowJpegMode);
+     } else {
+         // The legacy camera2 shim (HALv1 devices) and Camera.openLegacy() connect this way.
+-        jint status = Camera::connectLegacy(cameraId, halVersion, clientName,
++        // connectLegacy() keeps the legacy AIDL call's String16 package name, while
++        // Android 14 hands the name to this JNI function as std::string.
++        jint status = Camera::connectLegacy(cameraId, halVersion, String16(clientName.c_str()),
+                 Camera::USE_CALLING_UID, Camera::USE_CALLING_PID, camera);
+         if (status != NO_ERROR) {
+             return status;
+-- 
+2.43.0
+
