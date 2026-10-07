@@ -1,7 +1,7 @@
 From afbb35b1694968c26e178eba7dca14b23b3f092c Mon Sep 17 00:00:00 2001
 From: shahed <jamshidalinezhadian@gmail.com>
 Date: Mon, 5 Oct 2026 13:49:53 +0330
-Subject: [PATCH 2/2] camera: use c_str() instead of String8::string() for
+Subject: [PATCH 2/3] camera: use c_str() instead of String8::string() for
  Android 14
 
 String8: :string() is private in Android 14's libutils; the restored HALv1 code still used it.
