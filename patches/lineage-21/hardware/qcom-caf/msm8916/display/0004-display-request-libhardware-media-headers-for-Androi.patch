@@ -1,0 +1,148 @@
+From ddd44b8f9f22a1f87191d787f76d3c688b0bbae3 Mon Sep 17 00:00:00 2001
+From: shahed <jamshidalinezhadian@gmail.com>
+Date: Thu, 8 Oct 2026 22:13:22 +0330
+Subject: [PATCH 4/4] display: request libhardware/media headers for Android 14
+
+Android 14 builds every vendor module VNDK-style, without the old global include dirs, so libqdMetaData failed on <hardware/gralloc.h>. gl_headers was already added; this adds libhardware_headers and media_plugin_headers to every display module.
+
+Change-Id: I163d39944c9b732ad823dc16374cca6be7f0f247
+---
+ libgralloc/Android.mk    | 6 ++++++
+ libhdmi/Android.mk       | 3 +++
+ libhwcomposer/Android.mk | 3 +++
+ liblight/Android.mk      | 3 +++
+ libmemtrack/Android.mk   | 3 +++
+ liboverlay/Android.mk    | 3 +++
+ libqdutils/Android.mk    | 9 +++++++++
+ libqservice/Android.mk   | 3 +++
+ 8 files changed, 33 insertions(+)
+
+diff --git a/libgralloc/Android.mk b/libgralloc/Android.mk
+index 055d32c..8b4f51b 100644
+--- a/libgralloc/Android.mk
++++ b/libgralloc/Android.mk
+@@ -27,6 +27,9 @@ LOCAL_CFLAGS                  := $(common_flags) -DLOG_TAG=\"qdgralloc\"
+ LOCAL_HEADER_LIBRARIES        := generated_kernel_headers display_headers gl_headers
+ LOCAL_SRC_FILES               := gpu.cpp gralloc.cpp framebuffer.cpp mapper.cpp
+ 
++# kiwi: Android 14 builds every vendor module VNDK-style, without the old global
++# include dirs; request libhardware and media plugin/OMX headers explicitly.
++LOCAL_HEADER_LIBRARIES += libhardware_headers media_plugin_headers
+ include $(BUILD_SHARED_LIBRARY)
+ 
+ # MemAlloc Library
+@@ -44,4 +47,7 @@ ifeq ($(TARGET_USE_COMPAT_GRALLOC_ALIGN),true)
+ LOCAL_CFLAGS += -DDISABLE_GET_PIXEL_ALIGNMENT
+ endif
+ 
++# kiwi: Android 14 builds every vendor module VNDK-style, without the old global
++# include dirs; request libhardware and media plugin/OMX headers explicitly.
++LOCAL_HEADER_LIBRARIES += libhardware_headers media_plugin_headers
+ include $(BUILD_SHARED_LIBRARY)
+diff --git a/libhdmi/Android.mk b/libhdmi/Android.mk
+index 50ba9fd..1999b7e 100644
+--- a/libhdmi/Android.mk
++++ b/libhdmi/Android.mk
+@@ -10,4 +10,7 @@ LOCAL_CFLAGS                  := $(common_flags) -DLOG_TAG=\"qdhdmi\" -Wno-float
+ LOCAL_HEADER_LIBRARIES        := generated_kernel_headers display_headers gl_headers
+ LOCAL_SRC_FILES               := hdmi.cpp
+ 
++# kiwi: Android 14 builds every vendor module VNDK-style, without the old global
++# include dirs; request libhardware and media plugin/OMX headers explicitly.
++LOCAL_HEADER_LIBRARIES += libhardware_headers media_plugin_headers
+ include $(BUILD_SHARED_LIBRARY)
+diff --git a/libhwcomposer/Android.mk b/libhwcomposer/Android.mk
+index 945b4a5..c8f5bf1 100644
+--- a/libhwcomposer/Android.mk
++++ b/libhwcomposer/Android.mk
+@@ -65,4 +65,7 @@ ifeq ($(TARGET_SUPPORTS_ANDROID_WEAR), true)
+     LOCAL_CFLAGS += -DSUPPORT_BLIT_TO_FB
+ endif
+ 
++# kiwi: Android 14 builds every vendor module VNDK-style, without the old global
++# include dirs; request libhardware and media plugin/OMX headers explicitly.
++LOCAL_HEADER_LIBRARIES += libhardware_headers media_plugin_headers
+ include $(BUILD_SHARED_LIBRARY)
+diff --git a/liblight/Android.mk b/liblight/Android.mk
+index 6f827f8..7b87e85 100644
+--- a/liblight/Android.mk
++++ b/liblight/Android.mk
+@@ -25,4 +25,7 @@ LOCAL_CFLAGS := $(common_flags) -DLOG_TAG=\"qdlights\"
+ LOCAL_MODULE := lights.$(TARGET_BOARD_PLATFORM)
+ LOCAL_MODULE_TAGS := optional
+ 
++# kiwi: Android 14 builds every vendor module VNDK-style, without the old global
++# include dirs; request libhardware and media plugin/OMX headers explicitly.
++LOCAL_HEADER_LIBRARIES += libhardware_headers media_plugin_headers
+ include $(BUILD_SHARED_LIBRARY)
+diff --git a/libmemtrack/Android.mk b/libmemtrack/Android.mk
+index 0bf2cc0..747ff18 100644
+--- a/libmemtrack/Android.mk
++++ b/libmemtrack/Android.mk
+@@ -25,4 +25,7 @@ LOCAL_CFLAGS := -Wconversion -Wall -Werror -Wno-sign-conversion
+ LOCAL_SHARED_LIBRARIES := liblog
+ LOCAL_SRC_FILES := memtrack_msm.c kgsl.c
+ LOCAL_MODULE := memtrack.$(TARGET_BOARD_PLATFORM)
++# kiwi: Android 14 builds every vendor module VNDK-style, without the old global
++# include dirs; request libhardware and media plugin/OMX headers explicitly.
++LOCAL_HEADER_LIBRARIES += libhardware_headers media_plugin_headers
+ include $(BUILD_SHARED_LIBRARY)
+diff --git a/liboverlay/Android.mk b/liboverlay/Android.mk
+index bda6a97..275e622 100644
+--- a/liboverlay/Android.mk
++++ b/liboverlay/Android.mk
+@@ -19,4 +19,7 @@ LOCAL_SRC_FILES := \
+       overlayWriteback.cpp \
+       pipes/overlayGenPipe.cpp
+ 
++# kiwi: Android 14 builds every vendor module VNDK-style, without the old global
++# include dirs; request libhardware and media plugin/OMX headers explicitly.
++LOCAL_HEADER_LIBRARIES += libhardware_headers media_plugin_headers
+ include $(BUILD_SHARED_LIBRARY)
+diff --git a/libqdutils/Android.mk b/libqdutils/Android.mk
+index ce2d21f..519db1b 100644
+--- a/libqdutils/Android.mk
++++ b/libqdutils/Android.mk
+@@ -13,6 +13,9 @@ LOCAL_SRC_FILES               := profiler.cpp mdp_version.cpp \
+                                  comptype.cpp qd_utils.cpp \
+                                  cb_utils.cpp  display_config.cpp \
+                                  cb_swap_rect.cpp
++# kiwi: Android 14 builds every vendor module VNDK-style, without the old global
++# include dirs; request libhardware and media plugin/OMX headers explicitly.
++LOCAL_HEADER_LIBRARIES += libhardware_headers media_plugin_headers
+ include $(BUILD_SHARED_LIBRARY)
+ 
+ include $(CLEAR_VARS)
+@@ -25,6 +28,9 @@ LOCAL_CFLAGS                    += -DLOG_TAG=\"DisplayMetaData\"
+ LOCAL_MODULE_TAGS               := optional
+ LOCAL_MODULE                    := libqdMetaData
+ LOCAL_VENDOR_MODULE             := true
++# kiwi: Android 14 builds every vendor module VNDK-style, without the old global
++# include dirs; request libhardware and media plugin/OMX headers explicitly.
++LOCAL_HEADER_LIBRARIES += libhardware_headers media_plugin_headers
+ include $(BUILD_SHARED_LIBRARY)
+ 
+ 
+@@ -39,4 +45,7 @@ LOCAL_CFLAGS                    += -DLOG_TAG=\"DisplayMetaData\"
+ LOCAL_MODULE_TAGS               := optional
+ LOCAL_MODULE                    := libqdMetaData.system
+ 
++# kiwi: Android 14 builds every vendor module VNDK-style, without the old global
++# include dirs; request libhardware and media plugin/OMX headers explicitly.
++LOCAL_HEADER_LIBRARIES += libhardware_headers media_plugin_headers
+ include $(BUILD_SHARED_LIBRARY)
+diff --git a/libqservice/Android.mk b/libqservice/Android.mk
+index bb06289..83a02db 100644
+--- a/libqservice/Android.mk
++++ b/libqservice/Android.mk
+@@ -12,4 +12,7 @@ LOCAL_SRC_FILES               := QService.cpp \
+                                  IQService.cpp \
+                                  IQClient.cpp
+ 
++# kiwi: Android 14 builds every vendor module VNDK-style, without the old global
++# include dirs; request libhardware and media plugin/OMX headers explicitly.
++LOCAL_HEADER_LIBRARIES += libhardware_headers media_plugin_headers
+ include $(BUILD_SHARED_LIBRARY)
+-- 
+2.43.0
+
