@@ -1,0 +1,22 @@
+// KiwiDoze, converted from Android.mk for Android 14. As a Makefile app it made
+// Soong export AndroidX's merged manifests to Make, and that merge fails on
+// LineageOS 21's prebuilts (androidx.preference 1.3, minSdk 19, pulls in
+// androidx.window 1.5, minSdk 21). Soong apps consume the AARs directly, as
+// KiwiParts and LineageOS's own apps do.
+android_app {
+    name: "KiwiDoze",
+    srcs: ["src/**/*.java"],
+    resource_dirs: ["res"],
+    certificate: "platform",
+    platform_apis: true,
+    privileged: true,
+    static_libs: [
+        "androidx.core_core",
+        "androidx.preference_preference",
+        // Replaces LOCAL_RESOURCE_DIR += packages/resources/devicesettings/res.
+        "org.lineageos.settings.resources",
+    ],
+    optimize: {
+        proguard_flags_files: ["proguard.flags"],
+    },
+}
