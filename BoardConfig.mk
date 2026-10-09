@@ -166,6 +166,14 @@ include device/qcom/sepolicy-legacy/sepolicy.mk
 BOARD_VENDOR_SEPOLICY_DIRS += \
     device/huawei/kiwi/sepolicy
 
+# WHY: lineage-21's device/lineage/sepolicy/qcom renames hal_gnss_qti and location_domain
+# to the vendor_* names of sepolicy_vndr platforms; sepolicy-legacy still uses the old names.
+# Complete the gnss rename (its _exec type) and map location_domain back to sepolicy-legacy's
+# "location". Must stay after the sepolicy.mk include: m4 keeps the last -D of a name.
+BOARD_SEPOLICY_M4DEFS += \
+    hal_gnss_qti_exec=vendor_hal_gnss_qti_exec \
+    location_domain=location
+
 
 # VNDK
 TARGET_VNDK_USE_CORE_VARIANT := true
