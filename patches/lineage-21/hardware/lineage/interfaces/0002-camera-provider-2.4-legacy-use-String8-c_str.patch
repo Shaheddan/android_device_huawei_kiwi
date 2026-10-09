@@ -1,7 +1,7 @@
 From c4e74ae733101334d972c87a8f938b48e693e1bc Mon Sep 17 00:00:00 2001
 From: shahed <jamshidalinezhadian@gmail.com>
 Date: Mon, 5 Oct 2026 13:49:54 +0330
-Subject: [PATCH 2/2] camera: provider: 2.4-legacy: use String8::c_str()
+Subject: [PATCH 2/3] camera: provider: 2.4-legacy: use String8::c_str()
 
 String8: :string() is private in Android 14's libutils, so the legacy provider no longer compiled.
 Change-Id: I02c2aad4b249b87638a4fd0d725c57a80638e0b3

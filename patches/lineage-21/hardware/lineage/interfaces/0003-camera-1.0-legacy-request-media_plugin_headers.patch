@@ -1,0 +1,27 @@
+From a2f4644053b531b0d024d056ff30e316914719cf Mon Sep 17 00:00:00 2001
+From: shahed <jamshidalinezhadian@gmail.com>
+Date: Fri, 9 Oct 2026 13:28:34 +0330
+Subject: [PATCH 3/3] camera: 1.0-legacy: request media_plugin_headers
+
+Android 14 builds vendor modules without the old global include dirs, so CameraDevice.cpp no longer finds <media/hardware/HardwareAPI.h>. Request the vendor-available media_plugin_headers explicitly.
+
+Change-Id: Ic3384dfc5a88e236aca72c1e6db50a9313ad5a3e
+---
+ camera/device/1.0-legacy/Android.bp | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/camera/device/1.0-legacy/Android.bp b/camera/device/1.0-legacy/Android.bp
+index 2005caa..e82fc87 100644
+--- a/camera/device/1.0-legacy/Android.bp
++++ b/camera/device/1.0-legacy/Android.bp
+@@ -27,6 +27,7 @@ cc_library_shared {
+     static_libs: [
+         "android.hardware.camera.common@1.0-helper"
+     ],
++    header_libs: ["media_plugin_headers"],
+     include_dirs: [
+         "frameworks/native/include/media/openmax"
+     ],
+-- 
+2.43.0
+
