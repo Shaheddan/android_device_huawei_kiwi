@@ -1,7 +1,7 @@
 From 56a994c1192b9a42559fa58e0711c0e087a34404 Mon Sep 17 00:00:00 2001
 From: shahed <jamshidalinezhadian@gmail.com>
 Date: Sun, 4 Oct 2026 14:50:29 +0330
-Subject: [PATCH 1/4] hwc: drop the libmedia media-player death notifier for
+Subject: [PATCH 1/5] hwc: drop the libmedia media-player death notifier for
  Android 14
 
 Android 14 enforces vendor link types for every vendor module, so hwcomposer.msm8916 may no longer link libmedia (native:platform). Its only use was IMediaDeathNotifier, which reset the secure-playback flags when mediaserver died; Qualcomm removed the same dependency from its later display HALs for Treble.

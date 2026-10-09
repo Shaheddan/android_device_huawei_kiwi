@@ -1,7 +1,7 @@
 From 94fae08a281b5c46b9d84ed8d3f15c353129ac13 Mon Sep 17 00:00:00 2001
 From: shahed <jamshidalinezhadian@gmail.com>
 Date: Tue, 6 Oct 2026 12:39:40 +0330
-Subject: [PATCH 3/4] display: add gl_headers for Android 14
+Subject: [PATCH 3/5] display: add gl_headers for Android 14
 
 Android 14 no longer provides frameworks/native/opengl/include to vendor modules by default, so libqdutils (via hwc_utils.h) failed on <EGL/egl.h>. gl_headers is the vendor-available header library exporting it.
 

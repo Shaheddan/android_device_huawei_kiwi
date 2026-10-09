@@ -1,0 +1,26 @@
+From 897e4c8473a53ace070e4d9722df9020dc1f365a Mon Sep 17 00:00:00 2001
+From: shahed <jamshidalinezhadian@gmail.com>
+Date: Fri, 9 Oct 2026 14:22:27 +0330
+Subject: [PATCH 5/5] hwc: request libui_headers for Android 14
+
+hwc_dump_layers.h includes <ui/Region.h>, which on 13 came from the global frameworks/native/include. Android 14 builds vendor modules without it; libui_headers is the vendor-available header-only provider, so no runtime libui dependency is added.
+
+Change-Id: Ie1dab0b42bc3b7ea5a99ae6a027af1fab6c9a6b9
+---
+ libhwcomposer/Android.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/libhwcomposer/Android.mk b/libhwcomposer/Android.mk
+index c8f5bf1..4f0ba6a 100644
+--- a/libhwcomposer/Android.mk
++++ b/libhwcomposer/Android.mk
+@@ -67,5 +67,5 @@ endif
+ 
+ # kiwi: Android 14 builds every vendor module VNDK-style, without the old global
+ # include dirs; request libhardware and media plugin/OMX headers explicitly.
+-LOCAL_HEADER_LIBRARIES += libhardware_headers media_plugin_headers
++LOCAL_HEADER_LIBRARIES += libhardware_headers media_plugin_headers libui_headers
+ include $(BUILD_SHARED_LIBRARY)
+-- 
+2.43.0
+

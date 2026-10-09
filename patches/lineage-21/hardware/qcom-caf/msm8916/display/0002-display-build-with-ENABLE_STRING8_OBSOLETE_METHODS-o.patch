@@ -1,7 +1,7 @@
 From 71b6d62470a9fbc2cabb6b886f0ca38b54fc7f71 Mon Sep 17 00:00:00 2001
 From: shahed <jamshidalinezhadian@gmail.com>
 Date: Mon, 5 Oct 2026 13:49:55 +0330
-Subject: [PATCH 2/4] display: build with ENABLE_STRING8_OBSOLETE_METHODS on
+Subject: [PATCH 2/5] display: build with ENABLE_STRING8_OBSOLETE_METHODS on
  Android 14
 
 The msm8916 display HAL predates Android 14, where String8::string()/isEmpty() became private.

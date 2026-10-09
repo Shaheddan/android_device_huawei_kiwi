@@ -1,7 +1,7 @@
 From ddd44b8f9f22a1f87191d787f76d3c688b0bbae3 Mon Sep 17 00:00:00 2001
 From: shahed <jamshidalinezhadian@gmail.com>
 Date: Thu, 8 Oct 2026 22:13:22 +0330
-Subject: [PATCH 4/4] display: request libhardware/media headers for Android 14
+Subject: [PATCH 4/5] display: request libhardware/media headers for Android 14
 
 Android 14 builds every vendor module VNDK-style, without the old global include dirs, so libqdMetaData failed on <hardware/gralloc.h>. gl_headers was already added; this adds libhardware_headers and media_plugin_headers to every display module.
 
