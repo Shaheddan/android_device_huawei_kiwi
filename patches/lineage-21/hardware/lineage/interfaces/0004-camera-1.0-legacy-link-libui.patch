@@ -1,0 +1,27 @@
+From b5ffe9f7bad04f28e080c45bd01575facfe2b879 Mon Sep 17 00:00:00 2001
+From: shahed <jamshidalinezhadian@gmail.com>
+Date: Sat, 10 Oct 2026 15:55:21 +0330
+Subject: [PATCH 4/4] camera: 1.0-legacy: link libui
+
+On Android 14 the static camera.common@1.0-helper (HandleImporter) uses libui's GraphicBufferMapper, and a static library's shared dependencies are not linked into its user. Link libui explicitly, as AOSP's camera.device@1.0-impl does.
+
+Change-Id: I7a32b6aa33759422442975755411c63d11b5b897
+---
+ camera/device/1.0-legacy/Android.bp | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/camera/device/1.0-legacy/Android.bp b/camera/device/1.0-legacy/Android.bp
+index e82fc87..3c1098a 100644
+--- a/camera/device/1.0-legacy/Android.bp
++++ b/camera/device/1.0-legacy/Android.bp
+@@ -23,6 +23,7 @@ cc_library_shared {
+         "libgralloctypes",
+         "libhardware",
+         "libcamera_metadata",
++        "libui",
+     ],
+     static_libs: [
+         "android.hardware.camera.common@1.0-helper"
+-- 
+2.43.0
+
