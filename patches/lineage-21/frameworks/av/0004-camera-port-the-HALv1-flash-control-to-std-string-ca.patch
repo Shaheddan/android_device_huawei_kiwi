@@ -1,0 +1,122 @@
+From fef970090fe7619a858fa649edb68321d8ce621f Mon Sep 17 00:00:00 2001
+From: shahed <jamshidalinezhadian@gmail.com>
+Date: Sun, 11 Oct 2026 07:19:57 +0330
+Subject: [PATCH 4/4] camera: port the HALv1 flash control to std::string
+ camera IDs
+
+Android 14's FlashControlBase and CameraProviderManager::StatusListener take std::string camera IDs. The restored HALv1 CameraHardwareInterfaceFlashControl still used String8, so it no longer overrode the pure virtuals. CameraClient::getClientFromCookie now builds a std::string key for mActiveClientManager.
+
+Change-Id: I42a884a8f0ec0d416478c83c603f5648bce9e2ed
+---
+ .../camera/libcameraservice/CameraFlashlight.cpp   | 12 ++++++------
+ .../camera/libcameraservice/CameraFlashlight.h     | 14 +++++++-------
+ .../camera/libcameraservice/api1/CameraClient.cpp  |  2 +-
+ 3 files changed, 14 insertions(+), 14 deletions(-)
+
+diff --git a/services/camera/libcameraservice/CameraFlashlight.cpp b/services/camera/libcameraservice/CameraFlashlight.cpp
+index 093694a..b716c9f 100644
+--- a/services/camera/libcameraservice/CameraFlashlight.cpp
++++ b/services/camera/libcameraservice/CameraFlashlight.cpp
+@@ -405,7 +405,7 @@ CameraHardwareInterfaceFlashControl::~CameraHardwareInterfaceFlashControl() {
+ }
+ 
+ status_t CameraHardwareInterfaceFlashControl::setTorchMode(
+-        const String8& cameraId, bool enabled) {
++        const std::string& cameraId, bool enabled) {
+     Mutex::Autolock l(mLock);
+ 
+     // pre-check
+@@ -448,24 +448,24 @@ status_t CameraHardwareInterfaceFlashControl::setTorchMode(
+ }
+ 
+ status_t CameraHardwareInterfaceFlashControl::turnOnTorchWithStrengthLevel(
+-        const String8& /*cameraId*/, int32_t /*torchStrength*/) {
++        const std::string& /*cameraId*/, int32_t /*torchStrength*/) {
+     return INVALID_OPERATION;
+ }
+ 
+ status_t CameraHardwareInterfaceFlashControl::getTorchStrengthLevel(
+-        const String8& /*cameraId*/, int32_t* /*torchStrength*/) {
++        const std::string& /*cameraId*/, int32_t* /*torchStrength*/) {
+     return INVALID_OPERATION;
+ }
+ 
+ status_t CameraHardwareInterfaceFlashControl::hasFlashUnit(
+-        const String8& cameraId, bool *hasFlash) {
++        const std::string& cameraId, bool *hasFlash) {
+     Mutex::Autolock l(mLock);
+     // Close device after checking if it has a flash unit.
+     return hasFlashUnitLocked(cameraId, hasFlash, /*keepDeviceOpen*/false);
+ }
+ 
+ status_t CameraHardwareInterfaceFlashControl::hasFlashUnitLocked(
+-        const String8& cameraId, bool *hasFlash, bool keepDeviceOpen) {
++        const std::string& cameraId, bool *hasFlash, bool keepDeviceOpen) {
+     bool closeCameraDevice = false;
+ 
+     if (!hasFlash) {
+@@ -588,7 +588,7 @@ status_t CameraHardwareInterfaceFlashControl::initializePreviewWindow(
+ }
+ 
+ status_t CameraHardwareInterfaceFlashControl::connectCameraDevice(
+-        const String8& cameraId) {
++        const std::string& cameraId) {
+     sp<CameraHardwareInterface> device =
+             new CameraHardwareInterface(cameraId.c_str());
+ 
+diff --git a/services/camera/libcameraservice/CameraFlashlight.h b/services/camera/libcameraservice/CameraFlashlight.h
+index e1caa9f..9b698e3 100644
+--- a/services/camera/libcameraservice/CameraFlashlight.h
++++ b/services/camera/libcameraservice/CameraFlashlight.h
+@@ -153,15 +153,15 @@ class CameraHardwareInterfaceFlashControl : public FlashControlBase {
+         virtual ~CameraHardwareInterfaceFlashControl();
+ 
+         // FlashControlBase
+-        status_t setTorchMode(const String8& cameraId, bool enabled);
+-        status_t hasFlashUnit(const String8& cameraId, bool *hasFlash);
+-        status_t turnOnTorchWithStrengthLevel(const String8& cameraId,
++        status_t setTorchMode(const std::string& cameraId, bool enabled);
++        status_t hasFlashUnit(const std::string& cameraId, bool *hasFlash);
++        status_t turnOnTorchWithStrengthLevel(const std::string& cameraId,
+                 int32_t torchStrength);
+-        status_t getTorchStrengthLevel(const String8& cameraId, int32_t* torchStrength);
++        status_t getTorchStrengthLevel(const std::string& cameraId, int32_t* torchStrength);
+ 
+     private:
+         // connect to a camera device
+-        status_t connectCameraDevice(const String8& cameraId);
++        status_t connectCameraDevice(const std::string& cameraId);
+ 
+         // disconnect and free mDevice
+         status_t disconnectCameraDevice();
+@@ -181,12 +181,12 @@ class CameraHardwareInterfaceFlashControl : public FlashControlBase {
+         // camera device will remain open if keepDeviceOpen is true and the camera device will be
+         // closed if keepDeviceOpen is false. If camera device is already open when calling this
+         // function, keepDeviceOpen is ignored.
+-        status_t hasFlashUnitLocked(const String8& cameraId, bool *hasFlash, bool keepDeviceOpen);
++        status_t hasFlashUnitLocked(const std::string& cameraId, bool *hasFlash, bool keepDeviceOpen);
+ 
+         sp<CameraProviderManager> mProviderManager;
+         CameraProviderManager::StatusListener* mCallbacks;
+         sp<CameraHardwareInterface> mDevice;
+-        String8 mCameraId;
++        std::string mCameraId;
+         CameraParameters mParameters;
+         bool mTorchEnabled;
+ 
+diff --git a/services/camera/libcameraservice/api1/CameraClient.cpp b/services/camera/libcameraservice/api1/CameraClient.cpp
+index 92ad0cd..dd6529e 100644
+--- a/services/camera/libcameraservice/api1/CameraClient.cpp
++++ b/services/camera/libcameraservice/api1/CameraClient.cpp
+@@ -813,7 +813,7 @@ bool CameraClient::lockIfMessageWanted(int32_t msgType) {
+ }
+ 
+ sp<CameraClient> CameraClient::getClientFromCookie(void* user) {
+-    String8 cameraId = String8::format("%d", (int)(intptr_t) user);
++    std::string cameraId = std::to_string((int)(intptr_t) user);
+     auto clientDescriptor = sCameraService->mActiveClientManager.get(cameraId);
+     if (clientDescriptor != nullptr) {
+         return sp<CameraClient>{
+-- 
+2.43.0
+

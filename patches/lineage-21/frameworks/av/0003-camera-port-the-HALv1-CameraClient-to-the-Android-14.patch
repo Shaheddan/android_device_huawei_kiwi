@@ -1,7 +1,7 @@
 From a2bd74d474c47a04cae65c6b073fb09532bd994b Mon Sep 17 00:00:00 2001
 From: shahed <jamshidalinezhadian@gmail.com>
 Date: Wed, 7 Oct 2026 18:20:37 +0330
-Subject: [PATCH 3/3] camera: port the HALv1 CameraClient to the Android 14
+Subject: [PATCH 3/4] camera: port the HALv1 CameraClient to the Android 14
  client interface
 
 std: :string constructor/initialize/injectCamera, setRotateAndCropOverride(fromHal), the new setAutoframingOverride/supportsZoomOverride/setZoomOverride/injectSessionParams (unsupported on HALv1), and logClose through CameraService's CameraServiceProxyWrapper instance.
