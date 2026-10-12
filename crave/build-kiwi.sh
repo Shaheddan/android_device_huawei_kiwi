@@ -27,6 +27,20 @@ done
 /opt/crave/resync.sh || { echo "!! resync failed"; exit 1; }
 bash device/huawei/kiwi/patches/apply-patches.sh lineage-21 || { echo "!! kiwi patches failed"; exit 1; }
 
+# kiwi: Crave wraps compilers by renaming each one to mbt-bin-<name> (build 17's traceback).
+# LineageOS's gcc-4.9 "gcc" is itself a python wrapper that execs real-<its own file name>,
+# so after the rename it looks for real-mbt-bin-<name> and the kernel build dies. Point those
+# names at the real binaries; harmless where nothing was renamed.
+for t in aarch64/aarch64-linux-android-4.9:aarch64-linux-android arm/arm-linux-androideabi-4.9:arm-linux-androideabi; do
+  d=prebuilts/gcc/linux-x86/${t%%:*}/bin
+  p=${t##*:}
+  for c in gcc g++; do
+    [ -e "$d/real-$p-$c" ] && ln -sfn "real-$p-$c" "$d/real-mbt-bin-$p-$c"
+  done
+  echo "kiwi: toolchain wrappers in $d:"
+  ls -la "$d" | grep -E "mbt-bin|real-|$p-gcc\$|androidkernel-gcc" | sed 's/^/kiwi:   /'
+done
+
 source build/envsetup.sh
 lunch "lineage_kiwi-ap2a-$VARIANT" || { echo "!! lunch failed"; exit 1; }
 mka bacon
