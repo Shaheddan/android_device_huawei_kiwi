@@ -1,0 +1,40 @@
+From bc05ff1f93f1ce3994eb8e87edc71c8b0bf9344c Mon Sep 17 00:00:00 2001
+From: shahed <jamshidalinezhadian@gmail.com>
+Date: Mon, 12 Oct 2026 08:30:15 +0330
+Subject: [PATCH 6/6] hwc: qclient: use [[fallthrough]]
+
+FALLTHROUGH_INTENDED came from android-base/macros.h only through media/IMediaDeathNotifier.h, which the libmedia removal for Android 14 dropped. Use the standard C++17 attribute instead.
+
+Change-Id: I0d75c377a8a0cb8368a80be14213b1a22a565784
+---
+ libhwcomposer/hwc_qclient.cpp | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/libhwcomposer/hwc_qclient.cpp b/libhwcomposer/hwc_qclient.cpp
+index 80d52cf..34ba726 100644
+--- a/libhwcomposer/hwc_qclient.cpp
++++ b/libhwcomposer/hwc_qclient.cpp
+@@ -224,17 +224,17 @@ static void toggleDynamicDebug(hwc_context_t* ctx, const Parcel* inParcel) {
+             qhwc::MDPComp::dynamicDebug(enable);
+             if (debug_type != IQService::DEBUG_ALL)
+                 break;
+-            FALLTHROUGH_INTENDED;
++            [[fallthrough]];
+         case IQService::DEBUG_VSYNC:
+             ctx->vstate.debug = enable;
+             if (debug_type != IQService::DEBUG_ALL)
+                 break;
+-            FALLTHROUGH_INTENDED;
++            [[fallthrough]];
+         case IQService::DEBUG_VD:
+             HWCVirtualVDS::dynamicDebug(enable);
+             if (debug_type != IQService::DEBUG_ALL)
+                 break;
+-            FALLTHROUGH_INTENDED;
++            [[fallthrough]];
+         case IQService::DEBUG_PIPE_LIFECYCLE:
+             Overlay::debugPipeLifecycle(enable);
+             if (debug_type != IQService::DEBUG_ALL)
+-- 
+2.43.0
+

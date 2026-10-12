@@ -1,7 +1,7 @@
 From 897e4c8473a53ace070e4d9722df9020dc1f365a Mon Sep 17 00:00:00 2001
 From: shahed <jamshidalinezhadian@gmail.com>
 Date: Fri, 9 Oct 2026 14:22:27 +0330
-Subject: [PATCH 5/5] hwc: request libui_headers for Android 14
+Subject: [PATCH 5/6] hwc: request libui_headers for Android 14
 
 hwc_dump_layers.h includes <ui/Region.h>, which on 13 came from the global frameworks/native/include. Android 14 builds vendor modules without it; libui_headers is the vendor-available header-only provider, so no runtime libui dependency is added.
 
