@@ -104,6 +104,7 @@ TARGET_LEGACY_HW_DISK_ENCRYPTION := true
 
 # HIDL
 DEVICE_MANIFEST_FILE := $(DEVICE_PATH)/manifest.xml
+DEVICE_FRAMEWORK_COMPATIBILITY_MATRIX_FILE := $(DEVICE_PATH)/device_framework_matrix.xml
 
 
 # Legacy memfd
