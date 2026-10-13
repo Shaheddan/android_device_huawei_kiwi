@@ -43,4 +43,7 @@ done
 
 source build/envsetup.sh
 lunch "lineage_kiwi-ap2a-$VARIANT" || { echo "!! lunch failed"; exit 1; }
-mka bacon
+mka bacon || { echo "!! build failed"; exit 1; }
+if [ -n "${GH_TOKEN:-}" ]; then
+  bash device/huawei/kiwi/crave/upload-kiwi.sh || { echo "!! upload failed"; exit 1; }
+fi
