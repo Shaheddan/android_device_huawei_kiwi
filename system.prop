@@ -55,6 +55,10 @@ debug.sf.latch_unsignaled=1
 persist.demo.hdmirotationlock=false
 persist.hwc.mdpcomp.enable=true
 persist.hwc.ptor.enable=true
+# Android 14's libEGL loads the driver by exact name (libEGL_<ro.hardware.egl>.so) and only
+# falls back to scanning /vendor/lib*/egl when ro.vendor.api_level < 34. kiwi's blobs are
+# libEGL_adreno.so / libGLESv1_CM_adreno.so / libGLESv2_adreno.so.
+ro.hardware.egl=adreno
 ro.opengles.version=196610
 ro.qualcomm.cabl=0
 ro.qcom.ad=1
@@ -175,4 +179,6 @@ wifi.interface=wlan0
 # 19.1 (ref: Moto system_prop.mk)
 debug.renderengine.backend=threaded
 persist.sys.binary_xml=false
-ro.vndk.version=current
+# No ro.vndk.version: kiwi has no VNDK APEX. Android 14's linkerconfig treats a defined
+# ro.vndk.version as VNDK-enabled and aborts when /apex/com.android.vndk.v<version> is
+# missing ("Undefined var SANITIZER_DEFAULT_VENDOR"), so no linker config is written.

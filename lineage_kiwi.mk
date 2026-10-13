@@ -25,6 +25,13 @@ $(call inherit-product, device/huawei/kiwi/device.mk)
 # Inherit some common LineageOS stuff.
 $(call inherit-product, vendor/lineage/config/common_full_phone.mk)
 
+# Ship APEXes uncompressed. A compressed APEX is decompressed to /data and must be mounted
+# through dm-verity with optional table arguments, which kiwi's 3.10 dm-verity rejects
+# ("verity: Invalid argument count: 10-11 arguments required"); pre-installed APEXes on
+# /system are loop-mounted without dm-verity. Set in this product makefile, not device.mk:
+# its own value beats every inherited one (updatable_apex.mk sets true).
+PRODUCT_COMPRESSED_APEX := false
+
 # Device identifier. This must come after all inclusions
 PRODUCT_BRAND := HONOR
 PRODUCT_DEVICE := kiwi
