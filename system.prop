@@ -59,6 +59,9 @@ persist.hwc.ptor.enable=true
 # falls back to scanning /vendor/lib*/egl when ro.vendor.api_level < 34. kiwi's blobs are
 # libEGL_adreno.so / libGLESv1_CM_adreno.so / libGLESv2_adreno.so.
 ro.hardware.egl=adreno
+# SurfaceFlinger's shader-cache priming builds an RGBA_FP16 texture; Adreno 405 cannot make an
+# EGLImage of it (EGL_BAD_ACCESS) and RenderEngine aborts with "Failed to create a valid texture".
+service.sf.prime_shader_cache=0
 ro.opengles.version=196610
 ro.qualcomm.cabl=0
 ro.qcom.ad=1

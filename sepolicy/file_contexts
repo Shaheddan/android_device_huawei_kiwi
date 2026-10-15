@@ -34,6 +34,12 @@
 /system/vendor/bin/hw/android\.hardware\.light@2\.0-service\.kiwi                       u:object_r:hal_light_default_exec:s0
 /system/vendor/bin/hw/vendor\.lineage\.touch@1\.0-service\.kiwi                         u:object_r:hal_lineage_touch_kiwi_exec:s0
 
+# Same-process HALs: gralloc is loaded into coredomain processes (bootanim, apps). As
+# vendor_file, bootanim could not even stat it, libhardware fell back to gralloc.default and
+# every buffer from the allocator was an "invalid gralloc handle". LeEco s2 labels its own the same way.
+/(vendor|system/vendor)/lib(64)?/hw/gralloc\.msm8916\.so    u:object_r:same_process_hal_file:s0
+/(vendor|system/vendor)/lib(64)?/libmemalloc\.so            u:object_r:same_process_hal_file:s0
+
 # AIDL Power HAL, software Gatekeeper, and PowerStats mock (18.1 services;
 # labels absent from platform and sepolicy-legacy — added per Motorola msm8916 18.1 pattern)
 /(vendor|system/vendor)/bin/hw/android\.hardware\.gatekeeper@1\.0-service\.software    u:object_r:hal_gatekeeper_default_exec:s0
