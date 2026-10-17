@@ -14,6 +14,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Full dexpreopt on eng too. Android 14's runtime_libart.mk sets OVERRIDE_DISABLE_DEXOPT_ALL ?= true
+# for eng, which pre-opts only the ART module's boot image: with no framework boot image
+# (/system/framework/arm64/boot.art) zygote64 ran imageless, the 32-bit zygote compiled a boot
+# image at every start, and system_server's first-boot dexopt never finished before its watchdog
+# killed it. This file is read before the products it inherits, so the ?= there keeps our value.
+OVERRIDE_DISABLE_DEXOPT_ALL := false
+
 # Inherit from those products. Most specific first.
 $(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit.mk)
 $(call inherit-product, $(SRC_TARGET_DIR)/product/full_base_telephony.mk)

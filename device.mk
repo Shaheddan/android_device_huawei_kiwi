@@ -195,8 +195,11 @@ PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/sec_config:$(TARGET_COPY_OUT_VENDOR)/etc/sec_config
 
 # Lineage hardware
+# The service links the HIDL interface library, but nothing installs its vendor variant on
+# Android 14: the service crash-looped with "vendor.lineage.touch@1.0.so" not found.
 PRODUCT_PACKAGES += \
-    vendor.lineage.touch@1.0-service.kiwi
+    vendor.lineage.touch@1.0-service.kiwi \
+    vendor.lineage.touch@1.0.vendor
 
 # Keylayout
 PRODUCT_COPY_FILES += \
