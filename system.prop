@@ -66,6 +66,10 @@ ro.hardware.egl=adreno
 # SurfaceFlinger's shader-cache priming builds an RGBA_FP16 texture; Adreno 405 cannot make an
 # EGLImage of it (EGL_BAD_ACCESS) and RenderEngine aborts with "Failed to create a valid texture".
 service.sf.prime_shader_cache=0
+# Zygote must not preload the GL driver: kiwi's 2015 Adreno blob (GCC-built) uses x18 as a scratch
+# register, and every app forked from zygote inherits the clobbered x18. Android 14's Bluetooth is
+# built with shadow call stack (x18 = shadow stack pointer) and crashed in its first function.
+ro.zygote.disable_gl_preload=true
 ro.opengles.version=196610
 ro.qualcomm.cabl=0
 ro.qcom.ad=1

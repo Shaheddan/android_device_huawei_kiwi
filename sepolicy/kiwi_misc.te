@@ -70,6 +70,11 @@ dontaudit bluetooth_loader default_prop:file r_file_perms;
 # real denials can be harvested from a running device. Remove before shipping.
 permissive hal_graphics_composer_default;
 permissive surfaceflinger;
+# TEMPORARY (Android 14 bring-up): HAL services new in this port run permissive so they work
+# from the first build and their denials can be harvested. Remove after the harvest.
+permissive hal_sensors_default;
+permissive hal_radio_default;
+permissive hal_wifi_default;
 allow hal_graphics_composer_default init_service_status_prop:file r_file_perms;
 
 # vendor_init evaluates `on property:` triggers from the qcom init scripts
