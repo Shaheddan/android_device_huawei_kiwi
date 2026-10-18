@@ -264,7 +264,10 @@ PRODUCT_PACKAGES += \
     android.hardware.renderscript@1.0-impl
 
 # RIL
+# Android 14 telephony needs IRadio 1.4 or newer; kiwi's rild serves 1.1. LineageOS' wrapper
+# serves IRadio 1.4 on slot1/slot2 and forwards to rild.
 PRODUCT_PACKAGES += \
+    android.hardware.radio@1.4-service.legacy \
     librmnetctl \
     libxml2 \
     libril-wrapper
