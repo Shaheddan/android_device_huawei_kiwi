@@ -1,4 +1,6 @@
-type hal_lineage_touch_kiwi, domain, coredomain;
+# A /vendor service, so not a coredomain: Android 14 always builds split sepolicy, and a
+# coredomain may not read vendor_file, so it could not load vendor.lineage.touch@1.0.so.
+type hal_lineage_touch_kiwi, domain;
 hal_server_domain(hal_lineage_touch_kiwi, hal_lineage_touch)
 
 type hal_lineage_touch_kiwi_exec, exec_type, file_type;
