@@ -1,0 +1,34 @@
+From e01a81e6e4f6dedb10c9cf12fc17b6cac045bd5e Mon Sep 17 00:00:00 2001
+From: shahed <jamshidalinezhadian@gmail.com>
+Date: Sun, 18 Oct 2026 16:50:23 +0330
+Subject: [PATCH] runtime_libart: let a device opt out of the debug ART APEX on
+ eng
+
+Android 14 eng builds always ship com.android.art.debug, and on a debuggable build libnativehelper loads libartd.so whenever it exists, ignoring persist.sys.dalvik.vm.lib.2. PRODUCT_ART_TARGET_INCLUDE_DEBUG_BUILD cannot reach this node from a product makefile (product variables are cleared per inherited makefile), so honour OVERRIDE_ART_TARGET_INCLUDE_DEBUG_BUILD, a plain variable, the same way OVERRIDE_DISABLE_DEXOPT_ALL is honoured.
+
+kiwi (Honor 5X, 2 GB, Cortex-A53) runs too slowly on libartd for SystemUI and Settings to stay responsive.
+
+Change-Id: I7c0de1a5f0b7c3e2d9a4b6f8e1d2c3b4a5f6e7d8
+---
+ target/product/runtime_libart.mk | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/target/product/runtime_libart.mk b/target/product/runtime_libart.mk
+index a9d478d..46e0994 100644
+--- a/target/product/runtime_libart.mk
++++ b/target/product/runtime_libart.mk
+@@ -47,6 +47,11 @@ PRODUCT_PACKAGES += com.android.runtime
+ # PRODUCT_PACKAGES.
+ 
+ art_target_include_debug_build := $(PRODUCT_ART_TARGET_INCLUDE_DEBUG_BUILD)
++# A product makefile's own PRODUCT_* values are cleared before this inherited
++# node is read, so also honour a plain variable set ahead of inherit-product.
++ifneq (,$(OVERRIDE_ART_TARGET_INCLUDE_DEBUG_BUILD))
++  art_target_include_debug_build := $(OVERRIDE_ART_TARGET_INCLUDE_DEBUG_BUILD)
++endif
+ ifneq (false,$(art_target_include_debug_build))
+   ifneq (,$(filter eng,$(TARGET_BUILD_VARIANT)))
+     art_target_include_debug_build := true
+-- 
+2.43.0
+

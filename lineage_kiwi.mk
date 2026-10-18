@@ -21,6 +21,14 @@
 # killed it. This file is read before the products it inherits, so the ?= there keeps our value.
 OVERRIDE_DISABLE_DEXOPT_ALL := false
 
+# Release ART on eng too. Android 14's runtime_libart.mk ships the debug ART APEX
+# (com.android.art.debug) on eng, and on a debuggable build libnativehelper loads libartd.so
+# whenever it exists, whatever persist.sys.dalvik.vm.lib.2 says. On kiwi that made SystemUI and
+# Settings stop responding. PRODUCT_ART_TARGET_INCLUDE_DEBUG_BUILD cannot reach that inherited
+# makefile from here (product variables are cleared per makefile), so kiwi's build/make patch
+# (patches/lineage-21/build/make) adds this plain-variable override, read like the one above.
+OVERRIDE_ART_TARGET_INCLUDE_DEBUG_BUILD := false
+
 # Inherit from those products. Most specific first.
 $(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit.mk)
 $(call inherit-product, $(SRC_TARGET_DIR)/product/full_base_telephony.mk)

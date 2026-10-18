@@ -39,6 +39,10 @@ dalvik.vm.heapsize=512m
 dalvik.vm.heaptargetutilization=0.75
 dalvik.vm.heapminfree=2m
 dalvik.vm.heapmaxfree=8m
+# eng turns on StrictMode detectAll + logging + dropbox for every bundled app (about a thousand
+# StrictMode log lines per boot on kiwi). Honoured by apps that may read system_prop (system uid,
+# e.g. Settings).
+persist.sys.strictmode.disable=true
 
 # Display
 dalvik.vm.zygotemaxfailedboots=5
