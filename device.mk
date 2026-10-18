@@ -279,8 +279,11 @@ PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/seccomp/mediacodec-seccomp.policy:$(TARGET_COPY_OUT_VENDOR)/etc/seccomp_policy/mediacodec.policy
 
 # Sensors
+# Binderized: Android 14 always builds split sepolicy, so the HAL can no longer be loaded
+# passthrough into system_server (SensorService saw "No Sensors", no auto-rotation).
 PRODUCT_PACKAGES += \
     android.hardware.sensors@1.0-impl \
+    android.hardware.sensors@1.0-service \
     libsensorndkbridge \
     sensors.msm8916
 

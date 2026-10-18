@@ -135,6 +135,19 @@ service wcnss-service /vendor/bin/wcnss_service
     group system wifi radio
     oneshot
 
+# The sensors HAL runs binderized on Android 14. sensors.kiwi.so reads /dev/input/event*
+# (root:input) and writes the input-owned sensor sysfs nodes from ueventd.qcom.rc, which
+# system_server's input group used to cover; add input to the stock service.
+# "override" must come before "interface", or init rejects the duplicate interface.
+service vendor.sensors-hal-1-0 /vendor/bin/hw/android.hardware.sensors@1.0-service
+    override
+    interface android.hardware.sensors@1.0::ISensors default
+    class hal
+    user system
+    group system input wakelock uhid context_hub
+    capabilities BLOCK_SUSPEND
+    rlimit rtprio 10 10
+
 service imsqmidaemon /system/vendor/bin/imsqmidaemon
     class main
     user system
