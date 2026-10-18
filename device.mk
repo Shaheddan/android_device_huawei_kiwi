@@ -315,7 +315,10 @@ PRODUCT_PACKAGES += \
     android.hardware.vibrator@1.0-service
 
 # Wifi
+# The Wi-Fi HAL writes WIFI_DRIVER_FW_PATH_STA to /sys/module/wlan/parameters/fwpath, which
+# starts the built-in pronto driver and creates wlan0; without a HAL Wi-Fi never turns on.
 PRODUCT_PACKAGES += \
+    android.hardware.wifi-service \
     libwpa_client \
     wificond \
     hostapd \
