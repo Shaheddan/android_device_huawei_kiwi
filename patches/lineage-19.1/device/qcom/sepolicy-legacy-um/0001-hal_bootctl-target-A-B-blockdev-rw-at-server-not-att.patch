@@ -1,0 +1,38 @@
+From a64ee141867e2313c92e5fa632227b183fac707c Mon Sep 17 00:00:00 2001
+From: shahed <jamshidalinezhadian@gmail.com>
+Date: Wed, 22 Jul 2026 12:23:28 +0330
+Subject: [PATCH] hal_bootctl: target A/B blockdev rw at server, not attribute
+ (system_server is a client on S and hits blk_file neverallow)
+
+Change-Id: I543e27e665df15137498f0ff16cac1c8f7a10bf9
+---
+ legacy/vendor/common/hal_bootctl.te | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/legacy/vendor/common/hal_bootctl.te b/legacy/vendor/common/hal_bootctl.te
+index 4c64b85..a598c79 100644
+--- a/legacy/vendor/common/hal_bootctl.te
++++ b/legacy/vendor/common/hal_bootctl.te
+@@ -45,8 +45,8 @@ allow hal_bootctl {
+ }:blk_file { getattr };
+ 
+ # Allow the boot_control_hal to edit the attributes stored in the GPT.
+-allow hal_bootctl gpt_block_device:blk_file rw_file_perms;
+-allow hal_bootctl root_block_device:blk_file rw_file_perms;
++allow hal_bootctl_server gpt_block_device:blk_file rw_file_perms;
++allow hal_bootctl_server root_block_device:blk_file rw_file_perms;
+ 
+ # Allow boot_control_hal to access /dev/sgN devices (generic SCSI) to write the
+ # A/B slot selection for the XBL partition. Allow also to issue a
+@@ -63,7 +63,7 @@ dontaudit hal_bootctl self:capability sys_rawio;
+ allow hal_bootctl sysfs_scsi_target:dir r_dir_perms;
+ 
+ # Allow boot_control_hal to write to the XBL devices.
+-allow hal_bootctl xbl_block_device:blk_file rw_file_perms;
++allow hal_bootctl_server xbl_block_device:blk_file rw_file_perms;
+ 
+ # Read dir permission for dt_firmware
+ allow hal_bootctl sysfs_dt_firmware_android:dir r_dir_perms;
+-- 
+2.43.0
+

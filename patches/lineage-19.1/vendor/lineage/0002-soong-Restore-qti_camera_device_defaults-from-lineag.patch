@@ -1,0 +1,43 @@
+From 7c1facb98830953189bf0837ce0531ae68499471 Mon Sep 17 00:00:00 2001
+From: shahed <jamshidalinezhadian@gmail.com>
+Date: Wed, 22 Jul 2026 01:46:34 +0330
+Subject: [PATCH 2/3] soong: Restore qti_camera_device_defaults from
+ lineage-18.1 (needed by restored HAL1 camera)
+
+Change-Id: If210bec714bbf76b1cfbdf2bbc72223395c937fe
+---
+ build/soong/Android.bp | 21 +++++++++++++++++++++
+ 1 file changed, 21 insertions(+)
+
+diff --git a/build/soong/Android.bp b/build/soong/Android.bp
+index 2e65fe28..5cf47243 100644
+--- a/build/soong/Android.bp
++++ b/build/soong/Android.bp
+@@ -571,3 +571,24 @@ stagefright_qcom_legacy {
+         },
+     },
+ }
++
++soong_config_module_type {
++    name: "qti_camera_device",
++    module_type: "cc_defaults",
++    config_namespace: "lineageQcomVars",
++    bool_variables: ["uses_qti_camera_device"],
++    properties: [
++        "cppflags",
++        "shared_libs",
++    ],
++}
++
++qti_camera_device {
++    name: "qti_camera_device_defaults",
++    soong_config_variables: {
++        uses_qti_camera_device: {
++            cppflags: ["-DQTI_CAMERA_DEVICE"],
++            shared_libs: ["vendor.qti.hardware.camera.device@1.0"],
++        },
++    },
++}
+-- 
+2.43.0
+

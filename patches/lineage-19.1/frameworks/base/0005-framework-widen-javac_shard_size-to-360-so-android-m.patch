@@ -1,0 +1,28 @@
+From 4699bd5d5be8329501d67d2c92585279492b45b3 Mon Sep 17 00:00:00 2001
+From: shahed <jamshidalinezhadian@gmail.com>
+Date: Sat, 25 Jul 2026 07:21:07 +0330
+Subject: [PATCH 5/5] framework: widen javac_shard_size to 360 so android/media
+ compiles in one shard (frameworks/av AIDL android.media.Audio* parcelables
+ shadow the framework classes across shard boundaries)
+
+Change-Id: I12734f2cb2499108fcaa669da827083f4e5278b3
+---
+ Android.bp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Android.bp b/Android.bp
+index 0190e7d6c349..2687e445337e 100644
+--- a/Android.bp
++++ b/Android.bp
+@@ -309,7 +309,7 @@ java_defaults {
+         "--multi-dex",
+     ],
+     jarjar_rules: ":framework-jarjar-rules",
+-    javac_shard_size: 150,
++    javac_shard_size: 360,
+     plugins: [
+         "view-inspector-annotation-processor",
+         "staledataclass-annotation-processor",
+-- 
+2.43.0
+

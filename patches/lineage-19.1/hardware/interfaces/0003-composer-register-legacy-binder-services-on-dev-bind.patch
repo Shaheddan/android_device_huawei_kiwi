@@ -1,0 +1,28 @@
+From 2ca929c39d4e0cb082cc3af4c62242ed800cf6af Mon Sep 17 00:00:00 2001
+From: shahed <jamshidalinezhadian@gmail.com>
+Date: Mon, 27 Jul 2026 09:19:31 +0330
+Subject: [PATCH 3/3] composer: register legacy binder services on /dev/binder
+ (non-Treble kiwi; camera HAL in mediaserver needs display.qservice on the
+ system servicemanager)
+
+Change-Id: I49dd3522d175d57459af4541f2c8fe0751538255
+---
+ graphics/composer/2.1/default/service.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/graphics/composer/2.1/default/service.cpp b/graphics/composer/2.1/default/service.cpp
+index 1276d2df7..0a39da37b 100644
+--- a/graphics/composer/2.1/default/service.cpp
++++ b/graphics/composer/2.1/default/service.cpp
+@@ -29,7 +29,7 @@ using android::hardware::graphics::composer::V2_1::passthrough::HwcLoader;
+ 
+ int main() {
+     // the conventional HAL might start binder services
+-    android::ProcessState::initWithDriver("/dev/vndbinder");
++    android::ProcessState::initWithDriver("/dev/binder");
+     android::ProcessState::self()->setThreadPoolMaxThreadCount(4);
+     android::ProcessState::self()->startThreadPool();
+ 
+-- 
+2.43.0
+

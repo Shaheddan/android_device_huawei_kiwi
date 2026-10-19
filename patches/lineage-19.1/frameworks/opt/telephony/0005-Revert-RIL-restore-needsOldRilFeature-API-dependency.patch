@@ -1,0 +1,46 @@
+From 6d809dfa32ff07caf0c1038934008c3d634bd98a Mon Sep 17 00:00:00 2001
+From: shahed <jamshidalinezhadian@gmail.com>
+Date: Mon, 27 Jul 2026 03:38:09 +0330
+Subject: [PATCH 5/6] Revert "RIL: restore needsOldRilFeature API (dependency
+ of the legacypollstate patch)"
+
+This reverts commit 32a0d0b2b53a63056c43c02c5b4d2abd3dac96dc.
+---
+ src/java/com/android/internal/telephony/RIL.java | 9 ---------
+ 1 file changed, 9 deletions(-)
+
+diff --git a/src/java/com/android/internal/telephony/RIL.java b/src/java/com/android/internal/telephony/RIL.java
+index f79ed8e52..88164053f 100644
+--- a/src/java/com/android/internal/telephony/RIL.java
++++ b/src/java/com/android/internal/telephony/RIL.java
+@@ -255,7 +255,6 @@ public class RIL extends BaseCommands implements CommandsInterface {
+     AtomicBoolean mTestingEmergencyCall = new AtomicBoolean(false);
+ 
+     final Integer mPhoneId;
+-    private List<String> mOldRilFeatures;
+ 
+     private boolean mUseOldMncMccFormat;
+ 
+@@ -623,9 +622,6 @@ public class RIL extends BaseCommands implements CommandsInterface {
+             mRadioBugDetector = new RadioBugDetector(context, mPhoneId);
+         }
+ 
+-        final String oldRilFeatures = SystemProperties.get("ro.telephony.ril.config", "");
+-        mOldRilFeatures = Arrays.asList(oldRilFeatures.split(","));
+-
+         mUseOldMncMccFormat = SystemProperties.getBoolean(
+                 "ro.telephony.use_old_mnc_mcc_format", false);
+ 
+@@ -7828,9 +7824,4 @@ public class RIL extends BaseCommands implements CommandsInterface {
+     public HalVersion getHalVersion() {
+         return mRadioVersion;
+     }
+-
+-    // Ported from LineageOS telephony patch 0001; 0005 (legacypollstate) needs it.
+-    public boolean needsOldRilFeature(String feature) {
+-        return mOldRilFeatures.contains(feature);
+-    }
+ }
+-- 
+2.43.0
+
