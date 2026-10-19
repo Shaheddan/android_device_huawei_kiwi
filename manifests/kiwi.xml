@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  kiwi device, kernel and vendor for LineageOS 18.1, used by crave/build-kiwi.sh.
+
+  LineageOS 18.1 itself carries everything else kiwi needs: the msm8916 CAF
+  audio, display and media HALs, system/tools/dtbtool and
+  device/qcom/sepolicy-legacy (lineage-18.1-legacy).
+
+  vendor: there is no 18.1 branch of the vendor repo. lineage-19.1 holds the
+  same blob list (proprietary-files.txt is identical on the 18.1 and 19.1
+  device branches) and its makefiles are the 18.1-era generated ones.
+-->
+<manifest>
+
+  <remote name="shaheddan"
+          fetch="https://github.com/Shaheddan" />
+
+  <project path="device/huawei/kiwi"
+           name="android_device_huawei_kiwi"
+           remote="shaheddan" revision="lineage-18.1" />
+
+  <project path="kernel/huawei/kiwi"
+           name="android_kernel_huawei_kiwi"
+           remote="shaheddan" revision="lineage-18.1" />
+
+  <project path="vendor/huawei/kiwi"
+           name="proprietary_vendor_huawei_kiwi"
+           remote="shaheddan" revision="lineage-19.1" />
+
+</manifest>
