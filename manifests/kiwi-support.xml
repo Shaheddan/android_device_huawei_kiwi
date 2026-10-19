@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  qcom-caf audio, display and media, plus dtbtool, for kiwi on LineageOS 19.1.
+
+  WHY: LineageOS 19.1's manifest no longer lists any msm8916 CAF project, and
+  msm8916 maps to QCOM_HARDWARE_VARIANT=msm8916, so the build still looks for
+  hardware/qcom-caf/msm8916. lineage-19.0-caf-msm8916 is the newest msm8916
+  CAF branch; dtbtool (BOARD_KERNEL_SEPARATED_DT) stops at lineage-18.1.
+  Same set as the tablet's (hwjdn) 19.1 Crave builds.
+-->
+<manifest>
+  <project path="hardware/qcom-caf/msm8916/audio" name="LineageOS/android_hardware_qcom_audio" remote="github" revision="lineage-19.0-caf-msm8916" />
+  <project path="hardware/qcom-caf/msm8916/display" name="LineageOS/android_hardware_qcom_display" remote="github" revision="lineage-19.0-caf-msm8916" />
+  <project path="hardware/qcom-caf/msm8916/media" name="LineageOS/android_hardware_qcom_media" remote="github" revision="lineage-19.0-caf-msm8916" />
+  <project path="system/tools/dtbtool" name="LineageOS/android_system_tools_dtbtool" remote="github" revision="lineage-18.1" />
+</manifest>

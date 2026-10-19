@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  kiwi device, kernel, vendor and sepolicy for LineageOS 19.1, used by
+  crave/build-kiwi.sh. The msm8916 CAF HALs and dtbtool are in
+  kiwi-support.xml.
+
+  WHY declared here rather than hand-copied: an unmanaged directory is pruned
+  by ANY repo sync. That destroyed device/qcom/sepolicy-legacy and its local
+  commits during the 19.1 port.
+
+  sepolicy-legacy: TipzTeam's tree plus our vendor_display_prop commit
+  (cf54b87); LineageOS 19.1 has no sepolicy-legacy of its own.
+-->
+<manifest>
+
+  <remote name="shaheddan"
+          fetch="https://github.com/Shaheddan" />
+
+  <project path="device/huawei/kiwi"
+           name="android_device_huawei_kiwi"
+           remote="shaheddan" revision="lineage-19.1" />
+
+  <project path="kernel/huawei/kiwi"
+           name="android_kernel_huawei_kiwi"
+           remote="shaheddan" revision="lineage-19.1" />
+
+  <project path="vendor/huawei/kiwi"
+           name="proprietary_vendor_huawei_kiwi"
+           remote="shaheddan" revision="lineage-19.1" />
+
+  <project path="device/qcom/sepolicy-legacy"
+           name="android_device_qcom_sepolicy-legacy"
+           remote="shaheddan" revision="lineage-19.1" />
+
+</manifest>
