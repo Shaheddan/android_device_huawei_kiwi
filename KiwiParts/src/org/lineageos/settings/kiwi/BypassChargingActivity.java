@@ -7,10 +7,9 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.BatteryManager;
 import android.os.Bundle;
+import android.view.View;
 
 import androidx.preference.PreferenceFragmentCompat;
-import androidx.preference.SeekBarPreference;
-import androidx.preference.SwitchPreference;
 
 import com.android.settingslib.collapsingtoolbar.CollapsingToolbarBaseActivity;
 
@@ -30,9 +29,12 @@ public class BypassChargingActivity extends CollapsingToolbarBaseActivity {
     public static class SettingsFragment extends PreferenceFragmentCompat
             implements SharedPreferences.OnSharedPreferenceChangeListener {
 
-        private SwitchPreference mBypassNow;
-        private SwitchPreference mBypassAuto;
-        private SeekBarPreference mThreshold;
+        // Battery at or below this is drawn in the error colour while on battery.
+        private static final int LOW_LEVEL = 15;
+
+        private BypassSwitchPreference mBypassNow;
+        private BypassSwitchPreference mBypassAuto;
+        private BypassLevelPreference mThreshold;
         private BypassStatusPreference mStatus;
         private Intent mLastBattery;
 
@@ -55,14 +57,27 @@ public class BypassChargingActivity extends CollapsingToolbarBaseActivity {
             mThreshold = findPreference("bypass_threshold");
             mStatus = findPreference("bypass_status");
 
+            // The three rows share one rounded card.
+            if (mBypassNow != null) mBypassNow.setGroupPosition(KiwiStyle.GROUP_TOP);
+            if (mBypassAuto != null) mBypassAuto.setGroupPosition(KiwiStyle.GROUP_MIDDLE);
+            if (mThreshold != null) mThreshold.setGroupPosition(KiwiStyle.GROUP_BOTTOM);
+
             updateThresholdTitle();
             updateInterlock();
         }
 
+        @Override
+        public void onViewCreated(View view, Bundle savedInstanceState) {
+            super.onViewCreated(view, savedInstanceState);
+            // The rounded rows and the gaps between them separate items; no dividers.
+            setDivider(null);
+        }
+
         private void updateThresholdTitle() {
             if (mThreshold == null) return;
-            // Android 13 style: the value sits under the title instead of inside it.
-            mThreshold.setSummary(getString(R.string.bypass_level, mThreshold.getValue()));
+            // The value sits under the title instead of inside it.
+            mThreshold.setSummary(getString(R.string.bypass_threshold_summary,
+                    mThreshold.getValue()));
         }
 
         /**
@@ -82,14 +97,13 @@ public class BypassChargingActivity extends CollapsingToolbarBaseActivity {
             final int plugged = mLastBattery.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0);
             final int status = mLastBattery.getIntExtra(BatteryManager.EXTRA_STATUS,
                     BatteryManager.BATTERY_STATUS_UNKNOWN);
-            final String levelText = pct >= 0 ? getString(R.string.bypass_level, pct) : "";
-
             if (plugged == 0) {
-                mStatus.setStatus(BypassStatusPreference.Icon.BATTERY,
+                mStatus.setStatus(BatteryAnimationView.State.DISCHARGING, pct,
+                        pct >= 0 && pct <= LOW_LEVEL,
+                        getString(R.string.bypass_chip_battery),
                         getString(R.string.bypass_status_unplugged_title),
                         getString(now || auto ? R.string.bypass_status_unplugged_armed
-                                : R.string.bypass_status_unplugged_off),
-                        levelText, false);
+                                : R.string.bypass_status_unplugged_off));
                 return;
             }
 
@@ -97,28 +111,40 @@ public class BypassChargingActivity extends CollapsingToolbarBaseActivity {
                     && (status == BatteryManager.BATTERY_STATUS_NOT_CHARGING
                         || status == BatteryManager.BATTERY_STATUS_DISCHARGING);
             if (held) {
-                mStatus.setStatus(BypassStatusPreference.Icon.PLUG,
+                mStatus.setStatus(BatteryAnimationView.State.BYPASS, pct, false,
+                        getString(R.string.bypass_chip_bypass),
                         getString(R.string.bypass_status_active_title),
-                        getString(R.string.bypass_status_active_summary, pct),
-                        levelText, true);
+                        getString(R.string.bypass_status_active_summary, pct));
                 return;
             }
 
+            // Plugged in and not held: animate only what the battery really does.
+            final BatteryAnimationView.State state;
+            final int chip;
+            if (status == BatteryManager.BATTERY_STATUS_FULL) {
+                state = BatteryAnimationView.State.FULL;
+                chip = R.string.bypass_chip_full;
+            } else if (status == BatteryManager.BATTERY_STATUS_CHARGING) {
+                state = BatteryAnimationView.State.CHARGING;
+                chip = R.string.bypass_chip_charging;
+            } else {
+                state = BatteryAnimationView.State.DISCHARGING;
+                chip = R.string.bypass_chip_plugged;
+            }
             final String title = getString(status == BatteryManager.BATTERY_STATUS_FULL
                     ? R.string.bypass_status_full_title : R.string.bypass_status_charging_title);
             if (auto && !now && pct < threshold) {
-                mStatus.setStatus(BypassStatusPreference.Icon.BOLT, title,
-                        getString(R.string.bypass_status_charging_to, threshold),
-                        levelText, false);
+                mStatus.setStatus(state, pct, false, getString(chip), title,
+                        getString(R.string.bypass_status_charging_to, threshold));
             } else if (now || auto) {
                 // A mode is on but the service applies it with the next battery update.
-                mStatus.setStatus(BypassStatusPreference.Icon.BOLT,
+                mStatus.setStatus(state, pct, false,
+                        getString(R.string.bypass_chip_starting),
                         getString(R.string.bypass_status_pending_title),
-                        getString(R.string.bypass_status_pending_summary),
-                        levelText, false);
+                        getString(R.string.bypass_status_pending_summary));
             } else {
-                mStatus.setStatus(BypassStatusPreference.Icon.BOLT, title,
-                        getString(R.string.bypass_status_charging_off), levelText, false);
+                mStatus.setStatus(state, pct, false, getString(chip), title,
+                        getString(R.string.bypass_status_charging_off));
             }
         }
 

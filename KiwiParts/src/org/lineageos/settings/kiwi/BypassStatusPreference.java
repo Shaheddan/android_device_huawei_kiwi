@@ -1,30 +1,27 @@
 package org.lineageos.settings.kiwi;
 
 import android.content.Context;
-import android.content.res.Configuration;
 import android.graphics.drawable.GradientDrawable;
 import android.util.AttributeSet;
-import android.util.TypedValue;
 import android.view.View;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.preference.Preference;
 import androidx.preference.PreferenceViewHolder;
 
 /**
- * Material You status card at the top of the bypass charging page: what the charger
- * and battery are doing right now. Display only; it changes no setting.
+ * Android 14 Material You hero card at the top of the bypass charging page: an animated
+ * battery, a state chip, the level and what the charger and battery are doing right now.
+ * Display only; it changes no setting.
  */
 public class BypassStatusPreference extends Preference {
 
-    public enum Icon { BATTERY, BOLT, PLUG }
-
+    private BatteryAnimationView.State mState = BatteryAnimationView.State.DISCHARGING;
+    private int mPercent = -1;
+    private boolean mLow;
+    private CharSequence mChip = "";
     private CharSequence mStatusTitle = "";
     private CharSequence mStatusSummary = "";
-    private CharSequence mLevel = "";
-    private Icon mIcon = Icon.BATTERY;
-    private boolean mActive;
 
     public BypassStatusPreference(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -33,85 +30,74 @@ public class BypassStatusPreference extends Preference {
         setPersistent(false);
     }
 
-    public void setStatus(Icon icon, CharSequence title, CharSequence summary,
-            CharSequence level, boolean active) {
-        mIcon = icon;
+    /**
+     * @param state   drives the battery animation and the card colour
+     * @param percent battery level 0..100, or -1 when not known yet
+     * @param low     draw the charge in the error colour (low battery, on battery)
+     */
+    public void setStatus(BatteryAnimationView.State state, int percent, boolean low,
+            CharSequence chip, CharSequence title, CharSequence summary) {
+        mState = state;
+        mPercent = percent;
+        mLow = low;
+        mChip = chip;
         mStatusTitle = title;
         mStatusSummary = summary;
-        mLevel = level;
-        mActive = active;
         notifyChanged();
     }
 
     @Override
     public void onBindViewHolder(PreferenceViewHolder holder) {
         super.onBindViewHolder(holder);
-        final boolean night = (getContext().getResources().getConfiguration().uiMode
-                & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
+        final Context c = getContext();
+        final boolean active = mState == BatteryAnimationView.State.BYPASS;
 
-        // Material You roles from the dynamic palette: the primary container while
-        // bypass is holding the battery, a neutral surface otherwise.
-        final int cardColor, iconBgColor, iconColor, titleColor, summaryColor;
-        if (mActive) {
-            cardColor = color(night ? android.R.color.system_accent1_700
-                    : android.R.color.system_accent1_100);
-            iconBgColor = color(night ? android.R.color.system_accent1_200
-                    : android.R.color.system_accent1_600);
-            iconColor = color(night ? android.R.color.system_accent1_800
-                    : android.R.color.system_accent1_0);
-            titleColor = color(night ? android.R.color.system_accent1_50
-                    : android.R.color.system_accent1_900);
-            summaryColor = color(night ? android.R.color.system_accent1_200
-                    : android.R.color.system_accent1_700);
-        } else {
-            cardColor = color(night ? android.R.color.system_neutral2_800
-                    : android.R.color.system_neutral2_100);
-            iconBgColor = color(night ? android.R.color.system_accent2_700
-                    : android.R.color.system_accent2_200);
-            iconColor = color(night ? android.R.color.system_accent2_100
-                    : android.R.color.system_accent2_800);
-            titleColor = color(night ? android.R.color.system_neutral1_50
-                    : android.R.color.system_neutral1_900);
-            summaryColor = color(night ? android.R.color.system_neutral2_200
-                    : android.R.color.system_neutral2_700);
-        }
+        // Primary container while bypass holds the battery, secondary container otherwise.
+        final int cardColor = active ? KiwiStyle.primaryContainer(c)
+                : KiwiStyle.secondaryContainer(c);
+        final int onCard = active ? KiwiStyle.onPrimaryContainer(c)
+                : KiwiStyle.onSecondaryContainer(c);
+        final int track = active ? KiwiStyle.primaryContainerHigh(c)
+                : KiwiStyle.secondaryContainerHigh(c);
+        final int fill = mLow ? KiwiStyle.error(c) : KiwiStyle.primary(c);
+        final int glyph = mLow ? KiwiStyle.onError(c) : KiwiStyle.onPrimary(c);
+        // The back wave is the fill colour at half strength over the empty track.
+        final int wave = (fill & 0x00FFFFFF) | 0x80000000;
 
         final GradientDrawable card = new GradientDrawable();
-        card.setCornerRadius(dp(28));
+        card.setCornerRadius(KiwiStyle.dp(c, 32));
         card.setColor(cardColor);
         holder.findViewById(R.id.status_card).setBackground(card);
 
-        final GradientDrawable iconBg = new GradientDrawable();
-        iconBg.setShape(GradientDrawable.OVAL);
-        iconBg.setColor(iconBgColor);
-        holder.findViewById(R.id.status_icon_bg).setBackground(iconBg);
+        final BatteryAnimationView battery =
+                (BatteryAnimationView) holder.findViewById(R.id.battery_view);
+        battery.setColors(track, fill, wave, glyph, KiwiStyle.primary(c));
+        battery.setBattery(mState, mPercent);
 
-        final ImageView icon = (ImageView) holder.findViewById(R.id.status_icon);
-        icon.setImageResource(mIcon == Icon.PLUG ? R.drawable.ic_bypass_plug
-                : mIcon == Icon.BOLT ? R.drawable.ic_bypass_bolt
-                : R.drawable.ic_bypass_battery);
-        icon.setColorFilter(iconColor);
+        final TextView chip = (TextView) holder.findViewById(R.id.status_chip);
+        final GradientDrawable chipBg = new GradientDrawable();
+        chipBg.setCornerRadius(KiwiStyle.dp(c, 100));
+        chipBg.setColor(fill);
+        chip.setBackground(chipBg);
+        chip.setTextColor(glyph);
+        chip.setText(mChip);
+        chip.setVisibility(mChip.length() > 0 ? View.VISIBLE : View.GONE);
+
+        final TextView level = (TextView) holder.findViewById(R.id.status_level);
+        level.setText(mPercent >= 0 ? c.getString(R.string.bypass_level, mPercent) : "");
+        level.setTextColor(onCard);
 
         final TextView title = (TextView) holder.findViewById(R.id.status_title);
         title.setText(mStatusTitle);
-        title.setTextColor(titleColor);
+        title.setTextColor(onCard);
 
         final TextView summary = (TextView) holder.findViewById(R.id.status_summary);
         summary.setText(mStatusSummary);
-        summary.setTextColor(summaryColor);
+        summary.setTextColor(onCard);
+        summary.setAlpha(0.8f);
 
-        final TextView level = (TextView) holder.findViewById(R.id.status_level);
-        level.setText(mLevel);
-        level.setTextColor(titleColor);
-        level.setVisibility(mLevel.length() > 0 ? View.VISIBLE : View.GONE);
-    }
-
-    private int color(int res) {
-        return getContext().getColor(res);
-    }
-
-    private float dp(int value) {
-        return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, value,
-                getContext().getResources().getDisplayMetrics());
+        // One spoken summary for the whole card.
+        holder.itemView.setContentDescription(mChip + ". " + level.getText() + ". "
+                + mStatusTitle + ". " + mStatusSummary);
     }
 }

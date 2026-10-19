@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Android 13 Settings layout: intro, live status card, the modes, and a footer.
-     Keys and storage are unchanged, so BypassService behaves exactly as before. -->
+<!-- Android 14 Material You layout: intro, the animated status card, the modes as one
+     group of rounded rows, and a footer. Keys and storage are unchanged, so
+     BypassService behaves exactly as before. -->
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
@@ -15,20 +16,23 @@
         android:key="bypass_mode"
         android:title="@string/bypass_mode_category">
 
-        <SwitchPreference
+        <org.lineageos.settings.kiwi.BypassSwitchPreference
             android:key="bypass_now"
+            android:icon="@drawable/ic_bypass_plug"
             android:title="@string/bypass_now_title"
             android:summary="@string/bypass_now_summary"
             android:defaultValue="false" />
 
-        <SwitchPreference
+        <org.lineageos.settings.kiwi.BypassSwitchPreference
             android:key="bypass_auto"
+            android:icon="@drawable/ic_mode_auto"
             android:title="@string/bypass_auto_title"
             android:summary="@string/bypass_auto_summary"
             android:defaultValue="false" />
 
-        <SeekBarPreference
+        <org.lineageos.settings.kiwi.BypassLevelPreference
             android:key="bypass_threshold"
+            android:icon="@drawable/ic_mode_level"
             android:title="@string/bypass_threshold_title"
             android:max="100"
             app:min="10"
