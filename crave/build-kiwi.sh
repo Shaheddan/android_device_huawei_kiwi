@@ -46,6 +46,35 @@ fi
 /opt/crave/resync.sh || { echo "!! resync failed"; exit 1; }
 bash device/huawei/kiwi/patches/apply-patches.sh $BRANCH || { echo "!! kiwi patches failed"; exit 1; }
 
+# Crave wraps compilers by renaming each one to mbt-bin-<name> (kiwi LineageOS 21 build 17's
+# traceback). LineageOS's gcc-4.9 "gcc" is itself a python wrapper that execs
+# real-<its own file name>, so after the rename it looks for real-mbt-bin-<name> and the
+# kernel build dies. Point those names at the real binaries; harmless where nothing was
+# renamed or the toolchain has no wrapper.
+for t in aarch64/aarch64-linux-android-4.9:aarch64-linux-android arm/arm-linux-androideabi-4.9:arm-linux-androideabi; do
+  d=prebuilts/gcc/linux-x86/${t%%:*}/bin
+  p=${t##*:}
+  for c in gcc g++; do
+    [ -e "$d/real-$p-$c" ] && ln -sfn "real-$p-$c" "$d/real-mbt-bin-$p-$c"
+  done
+  echo "kiwi: toolchain wrappers in $d:"
+  ls -la "$d" | grep -E "mbt-bin|real-|$p-gcc\$|androidkernel-gcc" | sed 's/^/kiwi:   /'
+done
+
+source build/envsetup.sh
+lunch "lineage_kiwi-$VARIANT" || { echo "!! lunch failed"; exit 1; }
+
+# soong_ui starts each build by running the tree's CleanSpec steps that are new to this
+# out/, and an installclean when the product or variant changed. The tablet's Crave build
+# 306425, its first LineageOS 20 build in the workspace its 19.1 builds used, ran "Clean
+# step: rm -rf out/host/linux-x86" and "rm -rf out/soong/host" there, which deleted the
+# ncurses links made before it, so bcc_strip_attr failed at 35%. kiwi switches this same
+# workspace between 19.1 and 20 (and 18.1 between Crave's tree and LineageOS's), so it
+# hits the same steps. `m nothing` runs that whole start stage (soong, CleanSpec, kati,
+# installclean) and builds nothing; mka bacon then reuses its results with nothing left
+# to clean, so the links made after it stay.
+m nothing || { echo "!! m nothing failed"; exit 1; }
+
 # LineageOS 18.1 to 20 run old host tools that need libncurses.so.5 and libtinfo.so.5, which
 # Crave's Debian 13 image only has as .so.6 (all found on the tablet's 19.1 Crave builds):
 #  - prebuilts/clang/host/linux-x86/clang-3289846 (clang.real, llvm-link, ...), which
@@ -60,8 +89,8 @@ bash device/huawei/kiwi/patches/apply-patches.sh $BRANCH || { echo "!! kiwi patc
 # its tools in bin/ and their libraries in lib64/, which soong-built tools reach through
 # RUNPATH $ORIGIN/../lib64, so the links go in each tree's lib64. LD_LIBRARY_PATH would not
 # work: soong_ui hands ninja only an allowlist of environment variables and it is not on it.
-# Soong's cleanups only delete files a module installed earlier, so links under out/
-# survive; they are made again on every run anyway.
+# The links are made after `m nothing` (just above), never before it, because the start
+# of a build can rm -rf out/host/linux-x86 and out/soong/host.
 RSCLANG=prebuilts/clang/host/linux-x86/clang-3289846
 KIWI_O=${OUT_DIR:-out}
 KIWI_NC5=0
@@ -114,23 +143,6 @@ if [ "$KIWI_NC5" = 1 ]; then
   echo "kiwi: checked $KIWI_N host tools in:$KIWI_DIRS (bin/ beside each)"
 fi
 
-# Crave wraps compilers by renaming each one to mbt-bin-<name> (kiwi LineageOS 21 build 17's
-# traceback). LineageOS's gcc-4.9 "gcc" is itself a python wrapper that execs
-# real-<its own file name>, so after the rename it looks for real-mbt-bin-<name> and the
-# kernel build dies. Point those names at the real binaries; harmless where nothing was
-# renamed or the toolchain has no wrapper.
-for t in aarch64/aarch64-linux-android-4.9:aarch64-linux-android arm/arm-linux-androideabi-4.9:arm-linux-androideabi; do
-  d=prebuilts/gcc/linux-x86/${t%%:*}/bin
-  p=${t##*:}
-  for c in gcc g++; do
-    [ -e "$d/real-$p-$c" ] && ln -sfn "real-$p-$c" "$d/real-mbt-bin-$p-$c"
-  done
-  echo "kiwi: toolchain wrappers in $d:"
-  ls -la "$d" | grep -E "mbt-bin|real-|$p-gcc\$|androidkernel-gcc" | sed 's/^/kiwi:   /'
-done
-
-source build/envsetup.sh
-lunch "lineage_kiwi-$VARIANT" || { echo "!! lunch failed"; exit 1; }
 mka bacon || { echo "!! build failed"; exit 1; }
 # With GH_TOKEN set, upload the zip to a GitHub pre-release before Crave clears out/.
 if [ -n "${GH_TOKEN:-}" ]; then
