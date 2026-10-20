@@ -66,15 +66,10 @@ allow mediaserver qdisplay_service:service_manager find;
 # property; default_prop is system_internal_prop so it cannot be granted.
 dontaudit bluetooth_loader default_prop:file r_file_perms;
 
-# TEMPORARY: boot globally enforcing with the display stack permissive so its
-# real denials can be harvested from a running device. Remove before shipping.
-permissive hal_graphics_composer_default;
-permissive surfaceflinger;
-# TEMPORARY (Android 14 bring-up): HAL services new in this port run permissive so they work
-# from the first build and their denials can be harvested. Remove after the harvest.
-permissive hal_sensors_default;
-permissive hal_radio_default;
-permissive hal_wifi_default;
+# The display stack and the HALs new in Android 14 (sensors, the IRadio 1.4 wrapper, Wi-Fi
+# AIDL) ran permissive during bring-up. The 2026-10-20 harvests (a boot plus normal use, then
+# radio and Wi-Fi restarted with the audit rate limit lifted) found nothing more that
+# composer, surfaceflinger, radio or Wi-Fi need; sensors' rules are in hal_sensors_default.te.
 allow hal_graphics_composer_default init_service_status_prop:file r_file_perms;
 
 # vendor_init evaluates `on property:` triggers from the qcom init scripts
@@ -92,3 +87,20 @@ allow mm-qcamerad perfd:unix_stream_socket connectto;
 dontaudit libqmi_oem_main self:capability dac_read_search;
 dontaudit netmgrd self:capability dac_read_search;
 dontaudit toolbox system_data_root_file:dir read;
+
+# ---- Android 14 enforcing harvest (2026-10-20) ----
+# KiwiParts' BypassService writes /sys/class/power_supply/battery/factory_diag; the path
+# runs through the BQ24296 power_supply/battery directory, which sepolicy-legacy labels
+# sysfs_battery_supply. factory_diag itself is relabelled in file_contexts.
+allow system_app sysfs_battery_supply:dir search;
+# The boot animation's GL driver reads the vendor display properties, as every app's does.
+get_prop(bootanim, vendor_display_prop)
+# The GNSS HAL reads gps.conf, sap.conf, izat.conf and flp.conf, which kiwi installs in
+# /system/etc (the loc HAL and the blobs have those paths built in); without them it runs
+# with no XTRA/SUPL/NTP settings. Breaks a Treble neverallow (vendor reading /system), which
+# the userdebug build ignores like the other legacy rules (SELINUX_IGNORE_NEVERALLOWS).
+allow hal_gnss_default system_file:file r_file_perms;
+# mm-pp-daemon opens /dev/ion for its post-processing buffers.
+allow mm-pp-daemon ion_device:chr_file r_file_perms;
+# vendor_init evaluates property triggers on system_prop properties.
+get_prop(vendor_init, system_prop)

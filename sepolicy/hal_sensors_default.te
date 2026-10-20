@@ -1,0 +1,12 @@
+# Android 14 runs the sensors HAL as android.hardware.sensors@1.0-service (hal_sensors_default)
+# instead of passthrough inside system_server, where 19.1 and 20 gave Huawei's sensors.kiwi.so
+# system_server's rights. What the blob uses, from the 2026-10-20 permissive harvest:
+#  - each sensor's enable / poll_delay / name and the accelerometer's input directory, and the
+#    hall sensor and touch panel colour it reads: labelled sysfs_sensors in file_contexts;
+#    sepolicy-legacy's hal_sensors.te already allows rw on sysfs_sensors;
+#  - /proc/app_info (board and sensor part information) and Huawei's oeminfo_nvm socket;
+#  - /data/misc/akmd_set.txt, the AKM compass calibration, labelled sensors_data_file
+#    (the path is built into the blob; it reads it at start and rewrites it in place).
+allow hal_sensors_default proc_app_info:file r_file_perms;
+unix_socket_connect(hal_sensors_default, oeminfo, oeminfo)
+allow hal_sensors_default sensors_data_file:file { rw_file_perms setattr };

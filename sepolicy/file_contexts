@@ -46,4 +46,18 @@
 /(vendor|system/vendor)/bin/hw/android\.hardware\.power\.stats@1\.0-service\.mock      u:object_r:hal_power_stats_default_exec:s0
 /(vendor|system/vendor)/bin/hw/android\.hardware\.drm@1\.4-service\.clearkey    u:object_r:hal_drm_default_exec:s0
 
+# Sensors HAL (hal_sensors_default.te): sensor control nodes, the accelerometer's input dir,
+# and the hall sensor and touch panel colour it reads. Input numbers can change, so regex.
+/sys/devices/soc\.0/78b6000\.i2c/i2c-0/0-0018/input/input[0-9]+                u:object_r:sysfs_sensors:s0
+/sys/devices/soc\.0/78b6000\.i2c/i2c-0/0-0018/input/input[0-9]+/lis3dh-accel(/.*)?  u:object_r:sysfs_sensors:s0
+/sys/devices/virtual/input/input[0-9]+/akm09911-mag(/.*)?                        u:object_r:sysfs_sensors:s0
+/sys/devices/virtual/input/input[0-9]+/apds9930-light(/.*)?                      u:object_r:sysfs_sensors:s0
+/sys/devices/virtual/input/input[0-9]+/apds9930-proximity(/.*)?                  u:object_r:sysfs_sensors:s0
+/sys/devices/8789\.huawei_hall_sensor/get_camera_status                          u:object_r:sysfs_sensors:s0
+/sys/touch_screen/tp_color_info                                                  u:object_r:sysfs_sensors:s0
+/data/misc/akmd_set\.txt                                                         u:object_r:sensors_data_file:s0
 
+# Bypass charging node. sepolicy-legacy's .../power_supply/battery(/.*)? entry relabels it
+# sysfs_battery_supply when ueventd restorecons /sys, overriding the genfscon label; an exact
+# path is more specific, so this wins.
+/sys/devices/soc\.0/78b8000\.i2c/i2c-4/4-006b/power_supply/battery/factory_diag  u:object_r:sysfs_bypass_charging:s0
