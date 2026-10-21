@@ -50,6 +50,7 @@
 # and the hall sensor and touch panel colour it reads. Input numbers can change, so regex.
 /sys/devices/soc\.0/78b6000\.i2c/i2c-0/0-0018/input/input[0-9]+                u:object_r:sysfs_sensors:s0
 /sys/devices/soc\.0/78b6000\.i2c/i2c-0/0-0018/input/input[0-9]+/lis3dh-accel(/.*)?  u:object_r:sysfs_sensors:s0
+/sys/devices/virtual/input/input[0-9]+                                         u:object_r:sysfs_sensors:s0
 /sys/devices/virtual/input/input[0-9]+/akm09911-mag(/.*)?                        u:object_r:sysfs_sensors:s0
 /sys/devices/virtual/input/input[0-9]+/apds9930-light(/.*)?                      u:object_r:sysfs_sensors:s0
 /sys/devices/virtual/input/input[0-9]+/apds9930-proximity(/.*)?                  u:object_r:sysfs_sensors:s0
