@@ -309,3 +309,11 @@ service vm_bms /system/vendor/bin/vm_bms
     user root
     group root wakelock
 
+# The qpnp-vm-bms fuel gauge gives vm_bms 60 s from its probe to open /dev/vm_bms, then
+# falls back to a voltage-based SOC until it does (wrong %, then a jump). class main starts
+# only after post-fs-data, which can wait minutes for odsign on the first boot after a
+# flash. vm_bms needs only /dev/vm_bms, /dev/battery_data and the bms sysfs node, so start
+# it as soon as the filesystems are up.
+on late-fs
+    start vm_bms
+
