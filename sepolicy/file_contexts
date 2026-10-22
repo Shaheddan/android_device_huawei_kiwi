@@ -56,10 +56,6 @@
 /sys/devices/virtual/input/input[0-9]+/apds9930-proximity(/.*)?                  u:object_r:sysfs_sensors:s0
 /sys/devices/8789\.huawei_hall_sensor/get_camera_status                          u:object_r:sysfs_sensors:s0
 /sys/touch_screen/tp_color_info                                                  u:object_r:sysfs_sensors:s0
-# Internal storage. Same label as AOSP's /data/media/.* entry; being a new entry, it changes
-# the restorecon hash stored on /data and under /data/media/N, so the first boot of a build
-# with it relabels internal storage once (see rootdir/etc/init.kiwi.media.rc).
-/data/media/[0-9]+(/.*)?                                                         u:object_r:media_rw_data_file:s0
 /data/misc/akmd_set\.txt                                                         u:object_r:sensors_data_file:s0
 
 # Bypass charging node. sepolicy-legacy's .../power_supply/battery(/.*)? entry relabels it

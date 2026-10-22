@@ -65,15 +65,6 @@ LOCAL_SRC_FILES    := etc/init.target-from-init.rc
 LOCAL_MODULE_PATH  := $(TARGET_OUT_VENDOR_ETC)/init/hw
 include $(BUILD_PREBUILT)
 
-# Runs in init's own context (system_ext), not vendor_init.
-include $(CLEAR_VARS)
-LOCAL_MODULE       := init.kiwi.media.rc
-LOCAL_MODULE_TAGS  := optional
-LOCAL_MODULE_CLASS := ETC
-LOCAL_SRC_FILES    := etc/init.kiwi.media.rc
-LOCAL_MODULE_PATH  := $(TARGET_OUT_SYSTEM_EXT_ETC)/init
-include $(BUILD_PREBUILT)
-
 include $(CLEAR_VARS)
 LOCAL_MODULE       := init.recovery.qcom.rc
 LOCAL_MODULE_TAGS  := optional
