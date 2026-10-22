@@ -1,0 +1,14 @@
+# kiwi: keep internal storage labelled media_rw_data_file.
+# Installed in /system_ext/etc/init so init runs these commands in its own context; vendor
+# rc files run as vendor_init, which may not relabel /data/media.
+#
+# A /data/media/0 created outside Android (for example by the recovery) gets /data's label,
+# system_data_root_file, and so does everything later created inside it. MediaProvider
+# cannot open it then, and the camera cannot save photos. init.rc's restorecon of /data
+# does not repair it while the hash restorecon stored on /data still matches.
+on post-fs-data
+    # The top-level folders, checked every boot (a plain restorecon ignores stored hashes).
+    restorecon /data/media/0 /data/media/0/Android /data/media/0/Android/data /data/media/0/Android/media /data/media/0/Android/obb /data/media/obb
+    # The whole tree: walked when /data/media/0 has no stored hash (a recreated folder) or an
+    # outdated one, a single check otherwise.
+    restorecon_recursive /data/media/0

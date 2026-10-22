@@ -247,6 +247,7 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     fstab.qcom \
     init.class_main.sh \
+    init.kiwi.media.rc \
     init.qcom.rc \
     init.qcom.power.rc \
     init.qcom.usb.rc \
