@@ -1,15 +1,15 @@
 #!/bin/bash
 # Applies kiwi's platform patches to a synced LineageOS tree.
-#   bash device/huawei/kiwi/patches/apply-patches.sh [lineage-21|lineage-20]
-# Run from the top of the tree; the default patch set is lineage-21.
+#   bash device/huawei/kiwi/patches/apply-patches.sh [lineage-22.2|lineage-21|lineage-20]
+# Run from the top of the tree; the default patch set is lineage-22.2.
 # Patches already present (same subject in the project's recent history) are
 # skipped, so running it twice is safe, e.g. on a reused Crave tree.
 # WHY a fixed git identity: git am refuses to commit without one, and build
 #   machines (Crave nodes) usually have none configured.
 # WHY no --3way: it needs the patches' pre-image blobs, which shallow
-#   (--depth=1) trees do not have; the set is made against lineage-21.0 itself.
+#   (--depth=1) trees do not have; each set is made against its own LineageOS branch.
 set -e
-ver=${1:-lineage-21}
+ver=${1:-lineage-22.2}
 top=$(pwd)
 base="$(cd "$(dirname "$0")" && pwd)/$ver"
 [ -d "$top/.repo" ] || { echo "run this from the top of the LineageOS tree"; exit 1; }

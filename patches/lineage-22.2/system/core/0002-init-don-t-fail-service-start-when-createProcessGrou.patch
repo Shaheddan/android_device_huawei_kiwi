@@ -1,0 +1,41 @@
+From f07494ec082e129675da06bd802db1de84ae98a9 Mon Sep 17 00:00:00 2001
+From: shahed <jamshidalinezhadian@gmail.com>
+Date: Wed, 30 Sep 2026 04:06:49 +0330
+Subject: [PATCH 2/2] init: don't fail service start when createProcessGroup
+ fails
+
+Port of kiwi's lineage-20 patch to lineage-21.0. Android 14 signals the child through the cgroups_activated pipe instead of a raw byte; on failure we now log, skip memcg and fall through to the normal release write, restoring the Android 12 behaviour on kiwi's 3.10 kernel.
+
+Change-Id: I45e40aa84c242f64f51d28226028788c03e3cba3
+---
+ init/service.cpp | 14 ++++++++------
+ 1 file changed, 8 insertions(+), 6 deletions(-)
+
+diff --git a/init/service.cpp b/init/service.cpp
+index e7d710b..4f6c2dd 100644
+--- a/init/service.cpp
++++ b/init/service.cpp
+@@ -706,12 +706,14 @@ Result<void> Service::Start() {
+                          limit_percent_ != -1 || !limit_property_.empty();
+         errno = -createProcessGroup(uid(), pid_, use_memcg);
+         if (errno != 0) {
+-            Result<void> result = cgroups_activated.Write(kActivatingCgroupsFailed);
+-            if (!result.ok()) {
+-                return Error() << "Sending notification failed: " << result.error();
+-            }
+-            return Error() << "createProcessGroup(" << uid() << ", " << pid_ << ", " << use_memcg
+-                           << ") failed for service '" << name_ << "': " << strerror(errno);
++            // kiwi: a legacy 3.10 kernel may be unable to create the per-uid/pid
++            // process group. Android 12 logged this and carried on (proven on this
++            // kernel); Android 13+ aborts the service. Log and fall through: the
++            // success write on cgroups_activated further down still releases the
++            // child, which then runs without its own cgroup and without memcg.
++            PLOG(ERROR) << "createProcessGroup(" << uid() << ", " << pid_ << ", " << use_memcg
++                        << ") failed for service '" << name_ << "'";
++            use_memcg = false;
+         }
+ 
+         // When the blkio controller is mounted in the v1 hierarchy, NormalIoPriority is
+-- 
+2.43.0
+

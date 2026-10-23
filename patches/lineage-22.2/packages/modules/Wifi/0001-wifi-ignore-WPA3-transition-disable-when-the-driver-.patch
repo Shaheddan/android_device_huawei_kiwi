@@ -1,0 +1,51 @@
+From 04a1a0819498fd59aac16ea4fb4eb3a9141b5f3d Mon Sep 17 00:00:00 2001
+From: shahed <jamshidalinezhadian@gmail.com>
+Date: Wed, 30 Sep 2026 04:13:32 +0330
+Subject: [PATCH] wifi: ignore WPA3 transition disable when the driver has no
+ SAE
+
+A WPA2/WPA3 transition-mode AP sends a transition disable indication
+(USE_WPA3_PERSONAL) on the first connection. Honouring it disables PSK
+and leaves the auto-upgraded SAE params as the only enabled security
+type; on a device whose driver cannot do SAE (kiwi's prima), the
+network then has no usable security params, SupplicantStaNetworkHal
+logs "No available security params." and it can never connect again.
+Drop the WPA3 Personal bit when WIFI_FEATURE_WPA3_SAE is not supported.
+
+Change-Id: I51ed72041be308680b13022fbb8b0e80b414803f
+
+Ported to lineage-21.0: applied inside the new isValidTransitionDisableIndicationSource() branch, which validates the AP but not the driver.
+
+Change-Id: I360b1032f60d27ad58be32cd3ebe0b4a752b3d36
+---
+ .../com/android/server/wifi/ClientModeImpl.java    | 14 ++++++++++++--
+ 1 file changed, 12 insertions(+), 2 deletions(-)
+
+diff --git a/service/java/com/android/server/wifi/ClientModeImpl.java b/service/java/com/android/server/wifi/ClientModeImpl.java
+index 1556470..9272dd8 100644
+--- a/service/java/com/android/server/wifi/ClientModeImpl.java
++++ b/service/java/com/android/server/wifi/ClientModeImpl.java
+@@ -5968,8 +5968,18 @@ public class ClientModeImpl extends StateMachine implements ClientMode {
+                     log("Received TRANSITION_DISABLE_INDICATION: networkId=" + message.arg1
+                             + ", indication=" + message.arg2 + ", bssid=" + mLastBssid);
+                     if (isValidTransitionDisableIndicationSource(mLastBssid, message.arg2)) {
+-                        mWifiConfigManager.updateNetworkTransitionDisable(message.arg1,
+-                                message.arg2);
++                        int indication = message.arg2;
++                        // kiwi: the source check above only validates the AP. A driver without
++                        // WPA3/SAE (kiwi's prima) must still not honour "use WPA3 Personal": it
++                        // would disable PSK and leave SAE as the only enabled security type,
++                        // after which the network is never handed to wpa_supplicant again
++                        // ("No available security params").
++                        if ((indication & WifiMonitor.TDI_USE_WPA3_PERSONAL) != 0
++                                && (getSupportedFeatures() & WifiManager.WIFI_FEATURE_WPA3_SAE) == 0) {
++                            log("Ignoring WPA3 Personal transition disable: SAE not supported");
++                            indication &= ~WifiMonitor.TDI_USE_WPA3_PERSONAL;
++                        }
++                        mWifiConfigManager.updateNetworkTransitionDisable(message.arg1, indication);
+                     } else {
+                         Log.w(getTag(), "Drop TRANSITION_DISABLE_INDICATION event"
+                                 + " from an invalid source.");
+-- 
+2.43.0
+

@@ -1,0 +1,38 @@
+From 6a479f1913c25d680916bfd3491a923560598416 Mon Sep 17 00:00:00 2001
+From: shahed <jamshidalinezhadian@gmail.com>
+Date: Wed, 30 Sep 2026 04:08:26 +0330
+Subject: [PATCH] audio: set the binder threadpool size before starting it
+
+Port of kiwi's lineage-20 patch to lineage-21.0, where the vndbinder setup moved into an isVndservicemanagerEnabled() block. The limit stays between initWithDriver() and the first startThreadPool(), which is what keeps libbinder from aborting on a shrink-after-start.
+
+Change-Id: I455769ac9339c6990f4e5573b32d1838c7b6d024
+---
+ audio/common/all-versions/default/service/service.cpp | 9 ++++++++-
+ 1 file changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/audio/common/all-versions/default/service/service.cpp b/audio/common/all-versions/default/service/service.cpp
+index 1557a95..74eadf8 100644
+--- a/audio/common/all-versions/default/service/service.cpp
++++ b/audio/common/all-versions/default/service/service.cpp
+@@ -77,10 +77,17 @@ int main(int /* argc */, char* /* argv */ []) {
+ 
+     if (::android::ProcessState::isVndservicemanagerEnabled()) {
+         ::android::ProcessState::initWithDriver("/dev/vndbinder");
++        // kiwi: libbinder aborts if a threadpool is shrunk after it has started.
++        // The NDK and libbinder pools share this ProcessState, so the limit must
++        // be set before the first startThreadPool() -- but after initWithDriver(),
++        // or ProcessState would be created on /dev/binder and init would abort.
++        ABinderProcess_setThreadPoolMaxThreadCount(1);
+         ::android::ProcessState::self()->startThreadPool();
++    } else {
++        // Nothing started yet on this path: upstream order is already safe.
++        ABinderProcess_setThreadPoolMaxThreadCount(1);
+     }
+ 
+-    ABinderProcess_setThreadPoolMaxThreadCount(1);
+     ABinderProcess_startThreadPool();
+ 
+     const int32_t defaultValue = -1;
+-- 
+2.43.0
+

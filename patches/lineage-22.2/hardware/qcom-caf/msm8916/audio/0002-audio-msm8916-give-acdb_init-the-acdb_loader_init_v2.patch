@@ -1,0 +1,38 @@
+From de781567167810e15beefe9ec9ed1db0c5cde5bf Mon Sep 17 00:00:00 2001
+From: shahed <jamshidalinezhadian@gmail.com>
+Date: Sun, 11 Oct 2026 15:45:31 +0330
+Subject: [PATCH 2/3] audio: msm8916: give acdb_init the acdb_loader_init_v2
+ prototype
+
+acdb_init holds acdb_loader_init_v2 and is called with three arguments, but was typed acdb_init_t, which has no prototype. Android 14's clang rejects that under -Werror (-Wdeprecated-non-prototype). Use the existing acdb_init_v2_t.
+
+Change-Id: I9a53c1e09c2caa8439946f7daff1f0a79e255d3a
+---
+ hal/msm8916/platform.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/hal/msm8916/platform.c b/hal/msm8916/platform.c
+index 0a51a19..60eaaa3 100644
+--- a/hal/msm8916/platform.c
++++ b/hal/msm8916/platform.c
+@@ -225,7 +225,7 @@ struct platform_data {
+     /* Audio calibration related functions */
+     void                       *acdb_handle;
+     int                        voice_feature_set;
+-    acdb_init_t                acdb_init;
++    acdb_init_v2_t             acdb_init;
+     acdb_deallocate_t          acdb_deallocate;
+     acdb_send_audio_cal_t      acdb_send_audio_cal;
+     acdb_set_audio_cal_t       acdb_set_audio_cal;
+@@ -1732,7 +1732,7 @@ void *platform_init(struct audio_device *adev)
+         initialize_huawei_sound_param_path(my_data->acdb_handle);
+ #endif
+ 
+-        my_data->acdb_init = (acdb_init_t)dlsym(my_data->acdb_handle,
++        my_data->acdb_init = (acdb_init_v2_t)dlsym(my_data->acdb_handle,
+                                                     "acdb_loader_init_v2");
+         if (my_data->acdb_init == NULL) {
+             ALOGE("%s: dlsym error %s for acdb_loader_init_v2", __func__, dlerror());
+-- 
+2.43.0
+

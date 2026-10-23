@@ -1,0 +1,32 @@
+From 8c39ebbc3b805f99ffe3eeb10fdab02684e1af85 Mon Sep 17 00:00:00 2001
+From: shahed <jamshidalinezhadian@gmail.com>
+Date: Wed, 30 Sep 2026 03:33:33 +0330
+Subject: [PATCH] qcom_boards: restore msm8916 in QCOM_BOARD_PLATFORMS for kiwi
+
+Ported from kiwi's lineage-20 vendor/lineage patch; the board list moved from vendor/lineage/build/core/vendor/qcom_boards.mk to hardware/qcom-caf/common in lineage-21.0.
+
+Change-Id: Ia1bdf3ad9adf9e1810b61fa5cdedd35b7d18bb0a
+---
+ qcom_boards.mk | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/qcom_boards.mk b/qcom_boards.mk
+index 417d41a..63df38e 100644
+--- a/qcom_boards.mk
++++ b/qcom_boards.mk
+@@ -1,6 +1,12 @@
+ # Board platforms lists to be used for
+ # TARGET_BOARD_PLATFORM specific featurization
+ 
++# Legacy, kept for kiwi: msm8939 builds with TARGET_BOARD_PLATFORM := msm8916.
++# Without it the qcom build config is not applied to kiwi (same purpose as the
++# lineage-20 vendor/lineage patch; the list moved here in 21). Deliberately
++# outside every UM family: kiwi uses the msm8916 CAF HALs, not UM 3.18.
++QCOM_BOARD_PLATFORMS += msm8916
++
+ # UM 3.18
+ QCOM_BOARD_PLATFORMS += msm8937
+ QCOM_BOARD_PLATFORMS += msm8953
+-- 
+2.43.0
+
