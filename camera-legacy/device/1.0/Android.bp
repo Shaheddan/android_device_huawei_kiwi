@@ -1,0 +1,43 @@
+// kiwi: LineageOS's legacy HIDL camera device 1.0, carried in the device tree.
+// WHY: LineageOS 22.2 deleted it from hardware/lineage/interfaces ("RIP legacy camera
+// device and provider impl", 6bb297a, June 2025), and kiwi's HALv1 camera.msm8916 is
+// served only through it. Copied from lineage-21.0 (239c373) with kiwi's four Android 14
+// fixes folded in (fcntl.h, String8::c_str(), media_plugin_headers, libui), which were
+// patches/lineage-21/hardware/lineage/interfaces. Module names are unchanged, so
+// device.mk's PRODUCT_PACKAGES need no edit.
+cc_library_shared {
+    name: "camera.device@1.0-impl-legacy",
+    defaults: ["hidl_defaults"],
+    proprietary: true,
+    srcs: [
+        "CameraDevice.cpp",
+    ],
+    shared_libs: [
+        "libhidlbase",
+        "libhidlmemory",
+        "libutils",
+        "android.hardware.camera.device@1.0",
+        "android.hardware.camera.common@1.0",
+        "android.hardware.graphics.allocator@2.0",
+        "android.hardware.graphics.mapper@2.0",
+        "android.hardware.graphics.mapper@3.0",
+        "android.hardware.graphics.mapper@4.0",
+        "android.hardware.graphics.common@1.0",
+        "android.hidl.allocator@1.0",
+        "android.hidl.memory@1.0",
+        "libcutils",
+        "liblog",
+        "libgralloctypes",
+        "libhardware",
+        "libcamera_metadata",
+        "libui",
+    ],
+    static_libs: [
+        "android.hardware.camera.common@1.0-helper"
+    ],
+    header_libs: ["media_plugin_headers"],
+    include_dirs: [
+        "frameworks/native/include/media/openmax"
+    ],
+    export_include_dirs: ["."]
+}
