@@ -1,7 +1,7 @@
 #!/bin/bash
-# Build LineageOS 21 for kiwi (Honor 5X) on a Crave build node.
-# Start it from the devspace, inside the LOS 21 clone:
-#   crave run --no-patch -- "curl -sfL https://raw.githubusercontent.com/Shaheddan/android_device_huawei_kiwi/lineage-21/crave/build-kiwi.sh | VARIANT=userdebug bash"
+# Build LineageOS 22.2 for kiwi (Honor 5X) on a Crave build node.
+# Start it from the devspace, inside the LOS 22.1 clone (project 93):
+#   crave run --projectID 93 --no-patch -- "curl -sfL https://raw.githubusercontent.com/Shaheddan/android_device_huawei_kiwi/lineage-22.2/crave/build-kiwi.sh | VARIANT=userdebug bash"
 # WHY each step:
 #  - manifests fetched fresh, so the node builds exactly what is on GitHub;
 #  - /opt/crave/resync.sh instead of repo sync: Crave's rule, it manages their cache;
@@ -11,14 +11,15 @@
 #    still works for bring-up.
 # No `set -e`: build/envsetup.sh is not written for it; critical steps fail explicitly.
 VARIANT=${VARIANT:-userdebug}
-RAW=https://raw.githubusercontent.com/Shaheddan/android_device_huawei_kiwi/lineage-21
+RAW=https://raw.githubusercontent.com/Shaheddan/android_device_huawei_kiwi/lineage-22.2
 
-# Crave has no LineageOS 21 project: the job runs in the LOS 22.1 workspace
-# (project 93) and is re-initialised to Crave's own LineageOS 21 manifest.
-# accupara/los21 has the same remotes and android-14.0.0_r67 tag as
-# LineageOS/android lineage-21.0, so kiwi's manifests and patches fit as-is.
+# Crave has no LineageOS 22.2 project: the job runs in the LOS 22.1 workspace
+# (project 93) and is re-initialised to lineage-22.2. Crave's accupara/los22 only has
+# lineage-22.0 and 22.1 (git ls-remote, 2026-10-23), so unlike 21 this uses LineageOS's
+# own manifest (AOSP tag android-15.0.0_r32). UNTESTED on Crave so far: if resync.sh
+# rejects a non-accupara manifest, the first job shows it here.
 # -pixel-extra: same group filter as the local tree, keeps Pixel repos out.
-repo init -u https://github.com/accupara/los21.git -b lineage-21.0 --git-lfs -g default,-pixel-extra \
+repo init -u https://github.com/LineageOS/android.git -b lineage-22.2 --git-lfs -g default,-pixel-extra \
   || { echo "!! repo init failed"; exit 1; }
 
 rm -rf .repo/local_manifests && mkdir -p .repo/local_manifests || exit 1
@@ -46,7 +47,7 @@ if [ -d .repo ]; then
     || { echo "!! commit-graph indexes still present under .repo"; exit 1; }
 fi
 /opt/crave/resync.sh || { echo "!! resync failed"; exit 1; }
-bash device/huawei/kiwi/patches/apply-patches.sh lineage-21 || { echo "!! kiwi patches failed"; exit 1; }
+bash device/huawei/kiwi/patches/apply-patches.sh lineage-22.2 || { echo "!! kiwi patches failed"; exit 1; }
 
 # kiwi: Crave wraps compilers by renaming each one to mbt-bin-<name> (build 17's traceback).
 # LineageOS's gcc-4.9 "gcc" is itself a python wrapper that execs real-<its own file name>,
@@ -63,7 +64,9 @@ for t in aarch64/aarch64-linux-android-4.9:aarch64-linux-android arm/arm-linux-a
 done
 
 source build/envsetup.sh
-lunch "lineage_kiwi-ap2a-$VARIANT" || { echo "!! lunch failed"; exit 1; }
+# LineageOS 22.2's release config is bp1a (build/release aliases aosp_current to it;
+# 21 was ap2a, 22.1 ap4a).
+lunch "lineage_kiwi-bp1a-$VARIANT" || { echo "!! lunch failed"; exit 1; }
 
 # soong_ui starts each build by running the tree's CleanSpec steps that are new to this
 # out/, and an installclean when the product or variant changed. The tablet's Crave build

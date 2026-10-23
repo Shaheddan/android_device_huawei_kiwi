@@ -6,15 +6,15 @@
 #   crave run --projectID 93 --no-patch -- "curl -sfL <raw url of this file> | GH_TOKEN=... bash"
 # GH_TOKEN: fine-grained token, Contents read/write on $REPO only.
 REPO=${REPO:-Shaheddan/android_device_huawei_kiwi}
-BRANCH=${BRANCH:-lineage-21}
+BRANCH=${BRANCH:-lineage-22.2}
 API=${API:-https://api.github.com}
 UPLOADS=${UPLOADS:-https://uploads.github.com}
 OUT=${OUT:-out/target/product/kiwi}
 
 [ -n "${GH_TOKEN:-}" ] || { echo "!! GH_TOKEN is not set"; exit 1; }
-ZIP=$(ls -t "$OUT"/lineage-21.0-*-UNOFFICIAL-kiwi.zip 2>/dev/null | head -1)
+ZIP=$(ls -t "$OUT"/lineage-22.2-*-UNOFFICIAL-kiwi.zip 2>/dev/null | head -1)
 if [ -z "$ZIP" ]; then
-  echo "!! no lineage-21.0 zip in $PWD/$OUT; what is there:"
+  echo "!! no lineage-22.2 zip in $PWD/$OUT; what is there:"
   ls -la "$OUT" 2>&1 | tail -30
   exit 1
 fi
@@ -31,7 +31,7 @@ json() { python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('$1') 
 # Reuse the release if this tag already exists (re-running the upload is safe).
 ID=$(curl -sS "${AUTH[@]}" "$API/repos/$REPO/releases/tags/$TAG" | json id)
 if [ -z "$ID" ]; then
-  BODY=$(python3 -c "import json,sys; print(json.dumps({'tag_name': sys.argv[1], 'target_commitish': sys.argv[2], 'name': sys.argv[1], 'prerelease': True, 'body': 'LineageOS 21 (Android 14) test build for kiwi, eng variant. Not for daily use.'}))" "$TAG" "$BRANCH")
+  BODY=$(python3 -c "import json,sys; print(json.dumps({'tag_name': sys.argv[1], 'target_commitish': sys.argv[2], 'name': sys.argv[1], 'prerelease': True, 'body': 'LineageOS 22.2 (Android 15) test build for kiwi. Not for daily use.'}))" "$TAG" "$BRANCH")
   RESP=$(curl -sS "${AUTH[@]}" -X POST "$API/repos/$REPO/releases" -d "$BODY")
   ID=$(echo "$RESP" | json id)
   [ -n "$ID" ] || { echo "!! could not create release: $RESP"; exit 1; }
