@@ -1,0 +1,516 @@
+From 0cebf8d278adaa5800ac607e0c65e9d48765aead Mon Sep 17 00:00:00 2001
+From: shahed <jamshidalinezhadian@gmail.com>
+Date: Fri, 23 Oct 2026 12:47:27 +0330
+Subject: [PATCH 5/5] camera: port the HALv1 client to the Android 15 QPR2
+ camera service
+
+LineageOS 22.2 (android-15.0.0_r32) reworked the camera service client
+interface. Adapt the HALv1 CameraClient and HidlDeviceInfo1 to it:
+
+- CameraClient takes the AttributionAndPermissionUtils, the client's
+  AttributionSourceState, the calling pid and the rotation override, and
+  passes them to the new CameraService::Client constructor.
+- CameraThreadState is gone; the calling pid/uid come from the client's
+  own attribution utils. mClientPid became mCallingPid, and the uid and
+  package name are read through getClientUid() / getPackageName().
+- startCameraOps() is now notifyCameraOpening().
+- Preview, preview-callback and video targets are SurfaceType; the
+  HALv1 path still works on the IGraphicBufferProducer, taken from it
+  with flagtools::surfaceTypeToIGBP().
+- notifyClientSharedAccessPriorityChanged() is a no-op: camera sharing
+  is a camera2-only feature.
+- HidlDeviceInfo1::getCameraInfo() takes the rotationOverride mode that
+  replaced the portrait override flag.
+---
+ .../libcameraservice/api1/CameraClient.cpp    | 119 +++++++++---------
+ .../libcameraservice/api1/CameraClient.h      |  23 ++--
+ .../common/hidl/HidlProviderInfo.cpp          |   2 +-
+ .../common/hidl/HidlProviderInfo.h            |   3 +-
+ 4 files changed, 78 insertions(+), 69 deletions(-)
+
+diff --git a/services/camera/libcameraservice/api1/CameraClient.cpp b/services/camera/libcameraservice/api1/CameraClient.cpp
+index dd6529e..e2e585a 100644
+--- a/services/camera/libcameraservice/api1/CameraClient.cpp
++++ b/services/camera/libcameraservice/api1/CameraClient.cpp
+@@ -25,7 +25,6 @@
+ #include "api1/CameraClient.h"
+ #include "device1/CameraHardwareInterface.h"
+ #include "CameraService.h"
+-#include "utils/CameraThreadState.h"
+ #include "utils/CameraServiceProxyWrapper.h"
+ 
+ namespace android {
+@@ -35,16 +34,15 @@ namespace android {
+ 
+ CameraClient::CameraClient(const sp<CameraService>& cameraService,
+         const sp<hardware::ICameraClient>& cameraClient,
+-        const std::string& clientPackageName, const std::optional<std::string>& clientFeatureId,
++        std::shared_ptr<AttributionAndPermissionUtils> attributionAndPermissionUtils,
++        const AttributionSourceState& clientAttribution, int callingPid,
+         int cameraId, int cameraFacing, int sensorOrientation,
+-        int clientPid, int clientUid,
+-        int servicePid):
+-        Client(cameraService, cameraClient, clientPackageName, /*systemNativeClient*/ false,
+-                clientFeatureId, std::to_string(cameraId), cameraId, cameraFacing,
+-                sensorOrientation, clientPid, clientUid, servicePid,
+-                /*overrideToPortrait*/ false)
++        int servicePid, int rotationOverride):
++        Client(cameraService, cameraClient, attributionAndPermissionUtils, clientAttribution,
++                callingPid, /*systemNativeClient*/ false, std::to_string(cameraId), cameraId,
++                cameraFacing, sensorOrientation, servicePid, rotationOverride,
++                /*sharedMode*/ false)
+ {
+-    int callingPid = CameraThreadState::getCallingPid();
+     LOG1("CameraClient::CameraClient E (pid %d, id %d)", callingPid, cameraId);
+ 
+     mHardware = NULL;
+@@ -62,13 +60,13 @@ CameraClient::CameraClient(const sp<CameraService>& cameraService,
+ 
+ status_t CameraClient::initialize(sp<CameraProviderManager> manager,
+         const std::string& /*monitorTags*/) {
+-    int callingPid = CameraThreadState::getCallingPid();
++    int callingPid = getCallingPid();
+     status_t res;
+ 
+     LOG1("CameraClient::initialize E (pid %d, id %d)", callingPid, mCameraId);
+ 
+     // Verify ops permissions
+-    res = startCameraOps();
++    res = notifyCameraOpening();
+     if (res != OK) {
+         return res;
+     }
+@@ -103,7 +101,7 @@ status_t CameraClient::initialize(sp<CameraProviderManager> manager,
+ // tear down the client
+ CameraClient::~CameraClient() {
+     mDestructionStarted = true;
+-    int callingPid = CameraThreadState::getCallingPid();
++    int callingPid = getCallingPid();
+     LOG1("CameraClient::~CameraClient E (pid %d, this %p)", callingPid, this);
+ 
+     disconnect();
+@@ -122,7 +120,7 @@ status_t CameraClient::dumpClient(int fd, const Vector<String16>& args) {
+             mCameraId,
+             (getRemoteCallback() != NULL ?
+                     IInterface::asBinder(getRemoteCallback()).get() : NULL),
+-            mClientUid);
++            getClientUid());
+     len = (len > SIZE - 1) ? SIZE - 1 : len;
+     write(fd, buffer, len);
+ 
+@@ -146,18 +144,18 @@ status_t CameraClient::dumpClient(int fd, const Vector<String16>& args) {
+ // ----------------------------------------------------------------------------
+ 
+ status_t CameraClient::checkPid() const {
+-    int callingPid = CameraThreadState::getCallingPid();
+-    if (callingPid == mClientPid) return NO_ERROR;
++    int callingPid = getCallingPid();
++    if (callingPid == mCallingPid) return NO_ERROR;
+ 
+     ALOGW("attempt to use a locked camera from a different process"
+-         " (old pid %d, new pid %d)", mClientPid, callingPid);
++         " (old pid %d, new pid %d)", mCallingPid, callingPid);
+     return EBUSY;
+ }
+ 
+ status_t CameraClient::checkPidAndHardware() const {
+     if (mHardware == 0) {
+         ALOGE("attempt to use a camera after disconnect() (pid %d)",
+-              CameraThreadState::getCallingPid());
++              getCallingPid());
+         return INVALID_OPERATION;
+     }
+     status_t result = checkPid();
+@@ -166,13 +164,13 @@ status_t CameraClient::checkPidAndHardware() const {
+ }
+ 
+ status_t CameraClient::lock() {
+-    int callingPid = CameraThreadState::getCallingPid();
++    int callingPid = getCallingPid();
+     LOG1("lock (pid %d)", callingPid);
+     Mutex::Autolock lock(mLock);
+ 
+     // lock camera to this client if the the camera is unlocked
+-    if (mClientPid == 0) {
+-        mClientPid = callingPid;
++    if (mCallingPid == 0) {
++        mCallingPid = callingPid;
+         return NO_ERROR;
+     }
+ 
+@@ -181,7 +179,7 @@ status_t CameraClient::lock() {
+ }
+ 
+ status_t CameraClient::unlock() {
+-    int callingPid = CameraThreadState::getCallingPid();
++    int callingPid = getCallingPid();
+     LOG1("unlock (pid %d)", callingPid);
+     Mutex::Autolock lock(mLock);
+ 
+@@ -192,7 +190,7 @@ status_t CameraClient::unlock() {
+             ALOGE("Not allowed to unlock camera during recording.");
+             return INVALID_OPERATION;
+         }
+-        mClientPid = 0;
++        mCallingPid = 0;
+         LOG1("clear mRemoteCallback (pid %d)", callingPid);
+         // we need to remove the reference to ICameraClient so that when the app
+         // goes away, the reference count goes to 0.
+@@ -203,13 +201,13 @@ status_t CameraClient::unlock() {
+ 
+ // connect a new client to the camera
+ status_t CameraClient::connect(const sp<hardware::ICameraClient>& client) {
+-    int callingPid = CameraThreadState::getCallingPid();
++    int callingPid = getCallingPid();
+     LOG1("connect E (pid %d)", callingPid);
+     Mutex::Autolock lock(mLock);
+ 
+-    if (mClientPid != 0 && checkPid() != NO_ERROR) {
++    if (mCallingPid != 0 && checkPid() != NO_ERROR) {
+         ALOGW("Tried to connect to a locked camera (old pid %d, new pid %d)",
+-                mClientPid, callingPid);
++                mCallingPid, callingPid);
+         return EBUSY;
+     }
+ 
+@@ -220,7 +218,7 @@ status_t CameraClient::connect(const sp<hardware::ICameraClient>& client) {
+     }
+ 
+     mPreviewCallbackFlag = CAMERA_FRAME_CALLBACK_FLAG_NOOP;
+-    mClientPid = callingPid;
++    mCallingPid = callingPid;
+     mRemoteCallback = client;
+ 
+     LOG1("connect X (pid %d)", callingPid);
+@@ -240,13 +238,13 @@ static void disconnectWindow(const sp<ANativeWindow>& window) {
+ 
+ binder::Status CameraClient::disconnect() {
+     nsecs_t startTime = systemTime();
+-    int callingPid = CameraThreadState::getCallingPid();
++    int callingPid = getCallingPid();
+     LOG1("disconnect E (pid %d)", callingPid);
+     Mutex::Autolock lock(mLock);
+ 
+     binder::Status res = binder::Status::ok();
+     // Allow both client and the cameraserver to disconnect at all times
+-    if (callingPid != mClientPid && callingPid != mServicePid) {
++    if (callingPid != mCallingPid && callingPid != mServicePid) {
+         ALOGW("different client - don't disconnect");
+         return res;
+     }
+@@ -264,7 +262,7 @@ binder::Status CameraClient::disconnect() {
+     /*
+     sCameraService->updateProxyDeviceState(
+             hardware::CameraSessionStats::CAMERA_STATE_IDLE,
+-            mCameraIdStr, mCameraFacing, mClientPackageName,
++            mCameraIdStr, mCameraFacing, getPackageName(),
+             hardware::CameraSessionStats::CAMERA_API_LEVEL_1);
+     */
+     mHardware->cancelPicture();
+@@ -337,10 +335,14 @@ status_t CameraClient::setPreviewWindow(const sp<IBinder>& binder,
+ }
+ 
+ // set the buffer consumer that the preview will use
+-status_t CameraClient::setPreviewTarget(
+-        const sp<IGraphicBufferProducer>& bufferProducer) {
+-    LOG1("setPreviewTarget(%p) (pid %d)", bufferProducer.get(),
+-            CameraThreadState::getCallingPid());
++status_t CameraClient::setPreviewTarget(const sp<SurfaceType>& target) {
++    LOG1("setPreviewTarget(%p) (pid %d)", target.get(), getCallingPid());
++
++    // Android 15 QPR2 hands clients a SurfaceType: a Surface when libgui's WB_LIBCAMERASERVICE
++    // flags are on, otherwise still the IGraphicBufferProducer. The HALv1 path below always
++    // works on the producer, as before.
++    sp<IGraphicBufferProducer> bufferProducer =
++            (target != nullptr) ? flagtools::surfaceTypeToIGBP(target) : nullptr;
+ 
+     sp<IBinder> binder;
+     sp<ANativeWindow> window;
+@@ -357,7 +359,7 @@ status_t CameraClient::setPreviewTarget(
+ // set the preview callback flag to affect how the received frames from
+ // preview are handled.
+ void CameraClient::setPreviewCallbackFlag(int callback_flag) {
+-    LOG1("setPreviewCallbackFlag(%d) (pid %d)", callback_flag, CameraThreadState::getCallingPid());
++    LOG1("setPreviewCallbackFlag(%d) (pid %d)", callback_flag, getCallingPid());
+     Mutex::Autolock lock(mLock);
+     if (checkPidAndHardware() != NO_ERROR) return;
+ 
+@@ -369,22 +371,21 @@ void CameraClient::setPreviewCallbackFlag(int callback_flag) {
+     }
+ }
+ 
+-status_t CameraClient::setPreviewCallbackTarget(
+-        const sp<IGraphicBufferProducer>& callbackProducer) {
+-    (void)callbackProducer;
++status_t CameraClient::setPreviewCallbackTarget(const sp<SurfaceType>& target) {
++    (void)target;
+     ALOGE("%s: Unimplemented!", __FUNCTION__);
+     return INVALID_OPERATION;
+ }
+ 
+ // start preview mode
+ status_t CameraClient::startPreview() {
+-    LOG1("startPreview (pid %d)", CameraThreadState::getCallingPid());
++    LOG1("startPreview (pid %d)", getCallingPid());
+     return startCameraMode(CAMERA_PREVIEW_MODE);
+ }
+ 
+ // start recording mode
+ status_t CameraClient::startRecording() {
+-    LOG1("startRecording (pid %d)", CameraThreadState::getCallingPid());
++    LOG1("startRecording (pid %d)", getCallingPid());
+     return startCameraMode(CAMERA_RECORDING_MODE);
+ }
+ 
+@@ -433,7 +434,7 @@ status_t CameraClient::startPreviewMode() {
+ /*
+         sCameraService->updateProxyDeviceState(
+             hardware::CameraSessionStats::CAMERA_STATE_ACTIVE,
+-            mCameraIdStr, mCameraFacing, mClientPackageName,
++            mCameraIdStr, mCameraFacing, getPackageName(),
+             hardware::CameraSessionStats::CAMERA_API_LEVEL_1);
+ */
+     }
+@@ -469,7 +470,7 @@ status_t CameraClient::startRecordingMode() {
+ 
+ // stop preview mode
+ void CameraClient::stopPreview() {
+-    LOG1("stopPreview (pid %d)", CameraThreadState::getCallingPid());
++    LOG1("stopPreview (pid %d)", getCallingPid());
+     Mutex::Autolock lock(mLock);
+     if (checkPidAndHardware() != NO_ERROR) return;
+ 
+@@ -479,7 +480,7 @@ void CameraClient::stopPreview() {
+     /*
+     sCameraService->updateProxyDeviceState(
+         hardware::CameraSessionStats::CAMERA_STATE_IDLE,
+-        mCameraIdStr, mCameraFacing, mClientPackageName,
++        mCameraIdStr, mCameraFacing, getPackageName(),
+         hardware::CameraSessionStats::CAMERA_API_LEVEL_1);
+     */
+     mPreviewBuffer.clear();
+@@ -487,7 +488,7 @@ void CameraClient::stopPreview() {
+ 
+ // stop recording mode
+ void CameraClient::stopRecording() {
+-    LOG1("stopRecording (pid %d)", CameraThreadState::getCallingPid());
++    LOG1("stopRecording (pid %d)", getCallingPid());
+     {
+         Mutex::Autolock lock(mLock);
+         if (checkPidAndHardware() != NO_ERROR) return;
+@@ -513,7 +514,7 @@ void CameraClient::releaseRecordingFrame(const sp<IMemory>& mem) {
+     if (checkPidAndHardware() != NO_ERROR) return;
+     if (mem == nullptr) {
+         android_errorWriteWithInfoLog(CameraService::SN_EVENT_LOG_ID, "26164272",
+-                CameraThreadState::getCallingUid(), nullptr, 0);
++                getCallingUid(), nullptr, 0);
+         return;
+     }
+ 
+@@ -625,7 +626,7 @@ status_t CameraClient::setVideoBufferMode(int32_t videoBufferMode) {
+ }
+ 
+ bool CameraClient::previewEnabled() {
+-    LOG1("previewEnabled (pid %d)", CameraThreadState::getCallingPid());
++    LOG1("previewEnabled (pid %d)", getCallingPid());
+ 
+     Mutex::Autolock lock(mLock);
+     if (checkPidAndHardware() != NO_ERROR) return false;
+@@ -633,7 +634,7 @@ bool CameraClient::previewEnabled() {
+ }
+ 
+ bool CameraClient::recordingEnabled() {
+-    LOG1("recordingEnabled (pid %d)", CameraThreadState::getCallingPid());
++    LOG1("recordingEnabled (pid %d)", getCallingPid());
+ 
+     Mutex::Autolock lock(mLock);
+     if (checkPidAndHardware() != NO_ERROR) return false;
+@@ -641,7 +642,7 @@ bool CameraClient::recordingEnabled() {
+ }
+ 
+ status_t CameraClient::autoFocus() {
+-    LOG1("autoFocus (pid %d)", CameraThreadState::getCallingPid());
++    LOG1("autoFocus (pid %d)", getCallingPid());
+ 
+     Mutex::Autolock lock(mLock);
+     status_t result = checkPidAndHardware();
+@@ -651,7 +652,7 @@ status_t CameraClient::autoFocus() {
+ }
+ 
+ status_t CameraClient::cancelAutoFocus() {
+-    LOG1("cancelAutoFocus (pid %d)", CameraThreadState::getCallingPid());
++    LOG1("cancelAutoFocus (pid %d)", getCallingPid());
+ 
+     Mutex::Autolock lock(mLock);
+     status_t result = checkPidAndHardware();
+@@ -662,7 +663,7 @@ status_t CameraClient::cancelAutoFocus() {
+ 
+ // take a picture - image is returned in callback
+ status_t CameraClient::takePicture(int msgType) {
+-    LOG1("takePicture (pid %d): 0x%x", CameraThreadState::getCallingPid(), msgType);
++    LOG1("takePicture (pid %d): 0x%x", getCallingPid(), msgType);
+ 
+     Mutex::Autolock lock(mLock);
+     status_t result = checkPidAndHardware();
+@@ -691,7 +692,7 @@ status_t CameraClient::takePicture(int msgType) {
+ 
+ // set preview/capture parameters - key/value pairs
+ status_t CameraClient::setParameters(const String8& params) {
+-    LOG1("setParameters (pid %d) (%s)", CameraThreadState::getCallingPid(), params.c_str());
++    LOG1("setParameters (pid %d) (%s)", getCallingPid(), params.c_str());
+ 
+     Mutex::Autolock lock(mLock);
+     status_t result = checkPidAndHardware();
+@@ -706,18 +707,18 @@ status_t CameraClient::setParameters(const String8& params) {
+ String8 CameraClient::getParameters() const {
+     Mutex::Autolock lock(mLock);
+     // The camera service can unconditionally get the parameters at all times
+-    if (CameraThreadState::getCallingPid() != mServicePid && checkPidAndHardware() != NO_ERROR) {
++    if (getCallingPid() != mServicePid && checkPidAndHardware() != NO_ERROR) {
+         return String8();
+     }
+ 
+     String8 params(mHardware->getParameters().flatten());
+-    LOG1("getParameters (pid %d) (%s)", CameraThreadState::getCallingPid(), params.c_str());
++    LOG1("getParameters (pid %d) (%s)", getCallingPid(), params.c_str());
+     return params;
+ }
+ 
+ // enable shutter sound
+ status_t CameraClient::enableShutterSound(bool enable) {
+-    LOG1("enableShutterSound (pid %d)", CameraThreadState::getCallingPid());
++    LOG1("enableShutterSound (pid %d)", getCallingPid());
+ 
+     status_t result = checkPidAndHardware();
+     if (result != NO_ERROR) return result;
+@@ -732,7 +733,7 @@ status_t CameraClient::enableShutterSound(bool enable) {
+ }
+ 
+ status_t CameraClient::sendCommand(int32_t cmd, int32_t arg1, int32_t arg2) {
+-    LOG1("sendCommand (pid %d)", CameraThreadState::getCallingPid());
++    LOG1("sendCommand (pid %d)", getCallingPid());
+     int orientation;
+     Mutex::Autolock lock(mLock);
+     status_t result = checkPidAndHardware();
+@@ -974,7 +975,7 @@ void CameraClient::handleShutter(void) {
+     /*
+     sCameraService->updateProxyDeviceState(
+         hardware::CameraSessionStats::CAMERA_STATE_IDLE,
+-        mCameraIdStr, mCameraFacing, mClientPackageName,
++        mCameraIdStr, mCameraFacing, getPackageName(),
+         hardware::CameraSessionStats::CAMERA_API_LEVEL_1);
+     */
+ 
+@@ -1188,8 +1189,8 @@ int CameraClient::getOrientation(int degrees, bool mirror) {
+     return -1;
+ }
+ 
+-status_t CameraClient::setVideoTarget(const sp<IGraphicBufferProducer>& bufferProducer) {
+-    (void)bufferProducer;
++status_t CameraClient::setVideoTarget(const sp<SurfaceType>& target) {
++    (void)target;
+     ALOGE("%s: %d: CameraClient doesn't support setting a video target.", __FUNCTION__, __LINE__);
+     return INVALID_OPERATION;
+ }
+@@ -1267,4 +1268,8 @@ status_t CameraClient::injectSessionParams(
+     return INVALID_OPERATION;
+ }
+ 
++void CameraClient::notifyClientSharedAccessPriorityChanged(bool /*primaryClient*/) {
++    // Camera sharing is only offered to camera2 clients; nothing to tell a HALv1 client.
++}
++
+ }; // namespace android
+diff --git a/services/camera/libcameraservice/api1/CameraClient.h b/services/camera/libcameraservice/api1/CameraClient.h
+index b6c66e4..57982b5 100644
+--- a/services/camera/libcameraservice/api1/CameraClient.h
++++ b/services/camera/libcameraservice/api1/CameraClient.h
+@@ -37,10 +37,9 @@ public:
+     virtual status_t        connect(const sp<hardware::ICameraClient>& client);
+     virtual status_t        lock();
+     virtual status_t        unlock();
+-    virtual status_t        setPreviewTarget(const sp<IGraphicBufferProducer>& bufferProducer);
++    virtual status_t        setPreviewTarget(const sp<SurfaceType>& target);
+     virtual void            setPreviewCallbackFlag(int flag);
+-    virtual status_t        setPreviewCallbackTarget(
+-            const sp<IGraphicBufferProducer>& callbackProducer);
++    virtual status_t        setPreviewCallbackTarget(const sp<SurfaceType>& target);
+     virtual status_t        startPreview();
+     virtual void            stopPreview();
+     virtual bool            previewEnabled();
+@@ -58,7 +57,7 @@ public:
+     virtual status_t        setParameters(const String8& params);
+     virtual String8         getParameters() const;
+     virtual status_t        sendCommand(int32_t cmd, int32_t arg1, int32_t arg2);
+-    virtual status_t        setVideoTarget(const sp<IGraphicBufferProducer>& bufferProducer);
++    virtual status_t        setVideoTarget(const sp<SurfaceType>& target);
+     virtual status_t        setAudioRestriction(int mode);
+     virtual int32_t         getGlobalAudioRestriction();
+ 
+@@ -80,18 +79,22 @@ public:
+     virtual status_t        setZoomOverride(int32_t zoomOverride) override;
+     virtual status_t        injectSessionParams(
+             const hardware::camera2::impl::CameraMetadataNative& sessionParams) override;
++    // Android 15 QPR2: camera sharing is a camera2 feature; a HALv1 client is never shared.
++    virtual void            notifyClientSharedAccessPriorityChanged(bool primaryClient) override;
+ 
+     // Interface used by CameraService
++    // Android 15 QPR2: clients carry an AttributionSourceState instead of a package name,
++    // feature id, uid and pid, like every other CameraService::Client.
+     CameraClient(const sp<CameraService>& cameraService,
+             const sp<hardware::ICameraClient>& cameraClient,
+-            const std::string& clientPackageName,
+-            const std::optional<std::string>& clientFeatureId,
++            std::shared_ptr<AttributionAndPermissionUtils> attributionAndPermissionUtils,
++            const AttributionSourceState& clientAttribution,
++            int callingPid,
+             int cameraId,
+             int cameraFacing,
+             int sensorOrientation,
+-            int clientPid,
+-            int clientUid,
+-            int servicePid);
++            int servicePid,
++            int rotationOverride);
+     ~CameraClient();
+ 
+     virtual status_t initialize(sp<CameraProviderManager> manager,
+@@ -103,7 +106,7 @@ public:
+ 
+ private:
+ 
+-    // check whether the calling process matches mClientPid.
++    // check whether the calling process matches mCallingPid.
+     status_t                checkPid() const;
+     status_t                checkPidAndHardware() const;  // also check mHardware != 0
+ 
+diff --git a/services/camera/libcameraservice/common/hidl/HidlProviderInfo.cpp b/services/camera/libcameraservice/common/hidl/HidlProviderInfo.cpp
+index ecbe9c8..758d112 100644
+--- a/services/camera/libcameraservice/common/hidl/HidlProviderInfo.cpp
++++ b/services/camera/libcameraservice/common/hidl/HidlProviderInfo.cpp
+@@ -696,7 +696,7 @@ status_t HidlProviderInfo::HidlDeviceInfo1::getTorchStrengthLevel(int32_t * /*to
+     return INVALID_OPERATION;
+ }
+ 
+-status_t HidlProviderInfo::HidlDeviceInfo1::getCameraInfo(bool /*overrideToPortrait*/,
++status_t HidlProviderInfo::HidlDeviceInfo1::getCameraInfo(int /*rotationOverride*/,
+         int *portraitRotation, hardware::CameraInfo *info) const {
+     if (info == nullptr) return BAD_VALUE;
+     // No portrait override for HALv1: the legacy HAL reports its own orientation.
+diff --git a/services/camera/libcameraservice/common/hidl/HidlProviderInfo.h b/services/camera/libcameraservice/common/hidl/HidlProviderInfo.h
+index 6c79c54..e4eed6d 100644
+--- a/services/camera/libcameraservice/common/hidl/HidlProviderInfo.h
++++ b/services/camera/libcameraservice/common/hidl/HidlProviderInfo.h
+@@ -136,7 +136,8 @@ struct HidlProviderInfo : public CameraProviderManager::ProviderInfo,
+         virtual status_t setTorchMode(bool enabled) override;
+         virtual status_t turnOnTorchWithStrengthLevel(int32_t torchStrength) override;
+         virtual status_t getTorchStrengthLevel(int32_t *torchStrength) override;
+-        virtual status_t getCameraInfo(bool overrideToPortrait, int *portraitRotation,
++        // Android 15 QPR2: the portrait override became a rotationOverride mode.
++        virtual status_t getCameraInfo(int rotationOverride, int *portraitRotation,
+                 hardware::CameraInfo *info) const override;
+         // HALv1 devices are always API1 compatible.
+         virtual bool isAPI1Compatible() const override { return true; }
+-- 
+2.43.0
+

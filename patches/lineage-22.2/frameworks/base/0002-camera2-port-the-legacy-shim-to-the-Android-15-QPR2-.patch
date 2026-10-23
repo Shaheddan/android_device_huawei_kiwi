@@ -1,0 +1,164 @@
+From 3a4c36ba52eca3719f43117c49db0ebf8f810c4e Mon Sep 17 00:00:00 2001
+From: shahed <jamshidalinezhadian@gmail.com>
+Date: Fri, 23 Oct 2026 12:54:17 +0330
+Subject: [PATCH 2/2] camera2: port the legacy shim to the Android 15 QPR2
+ camera2 API
+
+LineageOS 22.2 (android-15.0.0_r32) changed two interfaces the HALv1
+legacy shim sits on:
+
+- ICameraDeviceCallbacks.onResultReceived() takes a CameraMetadataInfo
+  union (metadata, or the size of an entry in a result FMQ) instead of
+  CameraMetadataNative, and onClientSharedAccessPriorityChanged() was
+  added. LegacyCameraDevice wraps its metadata with
+  CameraMetadataInfo.metadata(), and the shim's callback thread passes
+  the union through; camera sharing is not offered on this path.
+- ICameraDeviceUser gained getCaptureResultMetadataQueue() and
+  isPrimaryClient(). The shim has no result FMQ, since it delivers the
+  metadata in each callback, so it returns null, and CameraDeviceImpl
+  only creates its FMQ reader when a queue exists. The shim's device is
+  never shared, so it is always the primary client.
+---
+ .../camera2/impl/CameraDeviceImpl.java        | 12 +++++--
+ .../camera2/legacy/CameraDeviceUserShim.java  | 31 ++++++++++++++++---
+ .../camera2/legacy/LegacyCameraDevice.java    |  6 ++--
+ 3 files changed, 40 insertions(+), 9 deletions(-)
+
+diff --git a/core/java/android/hardware/camera2/impl/CameraDeviceImpl.java b/core/java/android/hardware/camera2/impl/CameraDeviceImpl.java
+index 5cbe4d79..afac2619 100644
+--- a/core/java/android/hardware/camera2/impl/CameraDeviceImpl.java
++++ b/core/java/android/hardware/camera2/impl/CameraDeviceImpl.java
+@@ -56,6 +56,7 @@ import android.hardware.camera2.params.SharedSessionConfiguration.SharedOutputCo
+ import android.hardware.camera2.params.StreamConfigurationMap;
+ import android.hardware.camera2.utils.SubmitInfo;
+ import android.hardware.camera2.utils.SurfaceUtils;
++import android.hardware.common.fmq.MQDescriptor;
+ import android.os.Binder;
+ import android.os.Build;
+ import android.os.Handler;
+@@ -486,9 +487,14 @@ public class CameraDeviceImpl extends CameraDevice
+             if (mInError) return;
+ 
+             mRemoteDevice = new ICameraDeviceUserWrapper(remoteDevice);
+-            Parcel resultParcel = Parcel.obtain();
+-            mRemoteDevice.getCaptureResultMetadataQueue().writeToParcel(resultParcel, 0);
+-            mFMQReader = nativeCreateFMQReader(resultParcel);
++            // The legacy camera2 shim (HALv1 devices) has no result FMQ: it delivers metadata
++            // inside each result callback, so there is no queue reader to create.
++            MQDescriptor<Byte, Byte> resultQueue = mRemoteDevice.getCaptureResultMetadataQueue();
++            if (resultQueue != null) {
++                Parcel resultParcel = Parcel.obtain();
++                resultQueue.writeToParcel(resultParcel, 0);
++                mFMQReader = nativeCreateFMQReader(resultParcel);
++            }
+ 
+             IBinder remoteDeviceBinder = remoteDevice.asBinder();
+             // For legacy camera device, remoteDevice is in the same process, and
+diff --git a/core/java/android/hardware/camera2/legacy/CameraDeviceUserShim.java b/core/java/android/hardware/camera2/legacy/CameraDeviceUserShim.java
+index 74a8f575..d87295c7 100644
+--- a/core/java/android/hardware/camera2/legacy/CameraDeviceUserShim.java
++++ b/core/java/android/hardware/camera2/legacy/CameraDeviceUserShim.java
+@@ -21,6 +21,7 @@ import android.hardware.Camera;
+ import android.hardware.Camera.CameraInfo;
+ import android.hardware.camera2.CameraAccessException;
+ import android.hardware.camera2.CameraCharacteristics;
++import android.hardware.camera2.CameraMetadataInfo;
+ import android.hardware.camera2.CaptureRequest;
+ import android.hardware.camera2.ICameraDeviceCallbacks;
+ import android.hardware.camera2.ICameraDeviceUser;
+@@ -31,6 +32,7 @@ import android.hardware.camera2.impl.PhysicalCaptureResultInfo;
+ import android.hardware.camera2.params.OutputConfiguration;
+ import android.hardware.camera2.params.SessionConfiguration;
+ import android.hardware.camera2.utils.SubmitInfo;
++import android.hardware.common.fmq.MQDescriptor;
+ import android.os.ConditionVariable;
+ import android.os.IBinder;
+ import android.os.Looper;
+@@ -251,11 +253,13 @@ public class CameraDeviceUserShim implements ICameraDeviceUser {
+             getHandler().sendMessage(msg);
+         }
+ 
++        // Android 15 QPR2: results arrive as a CameraMetadataInfo union (metadata, or the
++        // size of an FMQ entry). The legacy device only ever sends the metadata itself.
+         @Override
+-        public void onResultReceived(final CameraMetadataNative result,
++        public void onResultReceived(final CameraMetadataInfo resultInfo,
+                 final CaptureResultExtras resultExtras,
+                 PhysicalCaptureResultInfo physicalResults[]) {
+-            Object[] resultArray = new Object[] { result, resultExtras };
++            Object[] resultArray = new Object[] { resultInfo, resultExtras };
+             Message msg = getHandler().obtainMessage(RESULT_RECEIVED,
+                     /*obj*/ resultArray);
+             getHandler().sendMessage(msg);
+@@ -276,6 +280,11 @@ public class CameraDeviceUserShim implements ICameraDeviceUser {
+             getHandler().sendMessage(msg);
+         }
+ 
++        @Override
++        public void onClientSharedAccessPriorityChanged(boolean primaryClient) {
++            // Camera sharing is not offered on the legacy (HALv1) path.
++        }
++
+         @Override
+         public void onRequestQueueEmpty() {
+             Message msg = getHandler().obtainMessage(REQUEST_QUEUE_EMPTY,
+@@ -323,9 +332,9 @@ public class CameraDeviceUserShim implements ICameraDeviceUser {
+                         }
+                         case RESULT_RECEIVED: {
+                             Object[] resultArray = (Object[]) msg.obj;
+-                            CameraMetadataNative result = (CameraMetadataNative) resultArray[0];
++                            CameraMetadataInfo resultInfo = (CameraMetadataInfo) resultArray[0];
+                             CaptureResultExtras resultExtras = (CaptureResultExtras) resultArray[1];
+-                            mCallbacks.onResultReceived(result, resultExtras,
++                            mCallbacks.onResultReceived(resultInfo, resultExtras,
+                                     new PhysicalCaptureResultInfo[0]);
+                             break;
+                         }
+@@ -797,6 +806,20 @@ public class CameraDeviceUserShim implements ICameraDeviceUser {
+         throw new UnsupportedOperationException("Legacy device does not support offline mode");
+     }
+ 
++    // Android 15 QPR2: camera2 clients read result metadata from an FMQ the camera service
++    // creates. The legacy device delivers its results in the callbacks themselves and has no
++    // queue; CameraDeviceImpl skips the FMQ reader when this returns null.
++    @Override
++    public MQDescriptor<Byte, Byte> getCaptureResultMetadataQueue() {
++        return null;
++    }
++
++    // Shared camera access is a camera2-service feature; the legacy device is never shared.
++    @Override
++    public boolean isPrimaryClient() {
++        return true;
++    }
++
+     @Override
+     public IBinder asBinder() {
+         // This is solely intended to be used for in-process binding.
+diff --git a/core/java/android/hardware/camera2/legacy/LegacyCameraDevice.java b/core/java/android/hardware/camera2/legacy/LegacyCameraDevice.java
+index 20a055bf..1b655472 100644
+--- a/core/java/android/hardware/camera2/legacy/LegacyCameraDevice.java
++++ b/core/java/android/hardware/camera2/legacy/LegacyCameraDevice.java
+@@ -20,6 +20,7 @@ import android.graphics.ImageFormat;
+ import android.graphics.SurfaceTexture;
+ import android.hardware.Camera;
+ import android.hardware.camera2.CameraCharacteristics;
++import android.hardware.camera2.CameraMetadataInfo;
+ import android.hardware.camera2.CaptureRequest;
+ import android.hardware.camera2.impl.CameraDeviceImpl;
+ import android.hardware.camera2.impl.CaptureResultExtras;
+@@ -257,8 +258,9 @@ public class LegacyCameraDevice implements AutoCloseable {
+                                 holder.getRequestId());
+                     }
+                     try {
+-                        mDeviceCallbacks.onResultReceived(result, extras,
+-                                new PhysicalCaptureResultInfo[0]);
++                        // Android 15 QPR2 wraps result metadata in CameraMetadataInfo.
++                        mDeviceCallbacks.onResultReceived(CameraMetadataInfo.metadata(result),
++                                extras, new PhysicalCaptureResultInfo[0]);
+                     } catch (RemoteException e) {
+                         throw new IllegalStateException(
+                                 "Received remote exception during onCameraError callback: ", e);
+-- 
+2.43.0
+
