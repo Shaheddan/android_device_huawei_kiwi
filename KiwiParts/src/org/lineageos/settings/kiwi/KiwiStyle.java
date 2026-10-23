@@ -10,9 +10,9 @@ import android.graphics.drawable.RippleDrawable;
 import android.util.TypedValue;
 
 /**
- * Material 3 colour roles and shapes for the bypass charging page, taken from the
- * device's Material You (Monet) palette so the page follows the wallpaper colours and
- * dark theme like the rest of Android 14 Settings.
+ * Material 3 colour roles and shapes for the KiwiParts pages, taken from the device's
+ * Material You (Monet) palette so the pages follow the wallpaper colours and dark theme
+ * like the rest of Android 15 Settings.
  *
  * The system palette maps _0/_10/_50/_100.._900/_1000 to M3 tones
  * 100/99/95/90..10/0, so e.g. accent1_600 is primary (tone 40) in light theme.
@@ -24,6 +24,9 @@ final class KiwiStyle {
     static final int GROUP_TOP = 1;
     static final int GROUP_MIDDLE = 2;
     static final int GROUP_BOTTOM = 3;
+
+    /** Large rounded cards (battery health cards, status card, main switch). */
+    static final float CARD_RADIUS_DP = 28;
 
     private KiwiStyle() {}
 
@@ -71,9 +74,22 @@ final class KiwiStyle {
         return pick(c, android.R.color.system_accent2_200, android.R.color.system_accent2_800);
     }
 
-    /** Rows on the page (M3 surface container high). */
+    /** Cards and grouped rows on the page (M3 surface container high). */
     static int surfaceContainer(Context c) {
         return pick(c, android.R.color.system_neutral2_100, android.R.color.system_neutral2_800);
+    }
+
+    /** One step above the cards: chevron circles, empty bar tracks, the off main switch. */
+    static int surfaceContainerHighest(Context c) {
+        return pick(c, android.R.color.system_neutral2_200, android.R.color.system_neutral2_700);
+    }
+
+    /**
+     * The main switch bar while off: in light theme the card tone (a tone darker looks
+     * heavy next to the white page), in dark theme one step above the cards.
+     */
+    static int switchBarOff(Context c) {
+        return pick(c, android.R.color.system_neutral2_100, android.R.color.system_neutral2_700);
     }
 
     static int onSurface(Context c) {
@@ -82,6 +98,10 @@ final class KiwiStyle {
 
     static int onSurfaceVariant(Context c) {
         return pick(c, android.R.color.system_neutral2_700, android.R.color.system_neutral2_200);
+    }
+
+    static int outline(Context c) {
+        return pick(c, android.R.color.system_neutral2_500, android.R.color.system_neutral2_400);
     }
 
     /** M3 baseline error; the Monet palette has no error ramp. */
@@ -93,6 +113,28 @@ final class KiwiStyle {
         return isNight(c) ? 0xFF601410 : 0xFFFFFFFF;
     }
 
+    // ---- battery health status colours ----------------------------------------------
+    // Fixed colours like Pixel's badge: health must read as "good" or "worn" whatever the
+    // wallpaper palette is, so these do not follow Monet. Same tones in light and dark.
+
+    /** Normal: the green of Pixel's badge, with a dark check on it. */
+    static int healthGood(Context c) {
+        return 0xFF81C995;
+    }
+
+    static int onHealthGood(Context c) {
+        return 0xFF0B2E16;
+    }
+
+    /** Reduced: amber, a warning rather than an error. */
+    static int healthReduced(Context c) {
+        return 0xFFFFB95C;
+    }
+
+    static int onHealthReduced(Context c) {
+        return 0xFF432B00;
+    }
+
     // ---- shapes ---------------------------------------------------------------------
 
     static float dp(Context c, float value) {
@@ -100,32 +142,42 @@ final class KiwiStyle {
                 c.getResources().getDisplayMetrics());
     }
 
+    static GradientDrawable rounded(Context c, float radiusDp, int color) {
+        final GradientDrawable shape = new GradientDrawable();
+        shape.setCornerRadius(dp(c, radiusDp));
+        shape.setColor(color);
+        return shape;
+    }
+
+    /** A ripple in the M3 state-layer strength, clipped to the given shape. */
+    static Drawable ripple(Context c, Drawable content, float[] radii) {
+        final GradientDrawable mask = new GradientDrawable();
+        mask.setCornerRadii(radii);
+        mask.setColor(0xFFFFFFFF);
+        final int ripple = (onSurface(c) & 0x00FFFFFF) | 0x1F000000;
+        return new RippleDrawable(ColorStateList.valueOf(ripple), content, mask);
+    }
+
+    static float[] radii(float top, float bottom) {
+        return new float[] { top, top, top, top, bottom, bottom, bottom, bottom };
+    }
+
     /**
-     * Android 14 style grouped row: a rounded card with large outer corners, small inner
-     * corners where rows meet, a 2dp gap between rows and a ripple clipped to the card.
+     * Grouped row: a rounded card with large outer corners, small inner corners where rows
+     * meet, a 2dp gap between rows and a ripple clipped to the card.
      */
     static Drawable groupedRowBackground(Context c, int position, boolean clickable) {
         final float big = dp(c, 24);
         final float small = dp(c, 6);
         final float top = position == GROUP_SINGLE || position == GROUP_TOP ? big : small;
         final float bottom = position == GROUP_SINGLE || position == GROUP_BOTTOM ? big : small;
-        final float[] radii = { top, top, top, top, bottom, bottom, bottom, bottom };
+        final float[] radii = radii(top, bottom);
 
         final GradientDrawable shape = new GradientDrawable();
         shape.setCornerRadii(radii);
         shape.setColor(surfaceContainer(c));
 
-        final Drawable content;
-        if (clickable) {
-            final GradientDrawable mask = new GradientDrawable();
-            mask.setCornerRadii(radii);
-            mask.setColor(0xFFFFFFFF);
-            final int ripple = (onSurface(c) & 0x00FFFFFF) | 0x1F000000;
-            content = new RippleDrawable(ColorStateList.valueOf(ripple), shape, mask);
-        } else {
-            content = shape;
-        }
-
+        final Drawable content = clickable ? ripple(c, shape, radii) : shape;
         final int side = Math.round(dp(c, 16));
         final int gap = Math.round(dp(c, 1));
         return new InsetDrawable(content, side, gap, side, gap);

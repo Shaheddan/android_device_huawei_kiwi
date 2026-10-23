@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Battery health, laid out like Pixel's page: intro, status badge, the two expandable
+     cards, Charging optimization and the footer. -->
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <com.android.settingslib.widget.TopIntroPreference
+        android:key="health_intro"
+        android:title="@string/health_intro" />
+
+    <org.lineageos.settings.kiwi.HealthBadgePreference
+        android:key="health_status" />
+
+    <org.lineageos.settings.kiwi.CapacityCardPreference
+        android:key="health_capacity" />
+
+    <org.lineageos.settings.kiwi.TipsCardPreference
+        android:key="health_tips" />
+
+    <Preference
+        android:key="charging_optimization"
+        android:title="@string/optimization_title"
+        android:persistent="false" />
+
+    <com.android.settingslib.widget.FooterPreference
+        android:key="health_footer"
+        android:title="@string/health_footer"
+        android:selectable="false" />
+
+</PreferenceScreen>

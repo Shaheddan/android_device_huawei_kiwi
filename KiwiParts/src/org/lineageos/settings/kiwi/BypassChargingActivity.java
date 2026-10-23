@@ -10,10 +10,28 @@ import android.os.Bundle;
 import android.view.View;
 
 import androidx.preference.PreferenceFragmentCompat;
+import androidx.preference.PreferenceManager;
 
 import com.android.settingslib.collapsingtoolbar.CollapsingToolbarBaseActivity;
 
+/**
+ * Charging optimization (opened from Battery health): bypass charging in the Android 15
+ * layout. A main switch turns it on, and two radio modes, like Pixel's Adaptive Charging /
+ * Limit to 80 %, choose how:
+ *  - Limit to N %: charge normally up to the limit, then run from the charger (bypass_auto);
+ *  - Hold current level: stop charging now and run from the charger (bypass_now).
+ * The keys and values are the ones BypassService has always read, so the service is
+ * unchanged apart from applying a change at once.
+ */
 public class BypassChargingActivity extends CollapsingToolbarBaseActivity {
+
+    static final String KEY_NOW = "bypass_now";
+    static final String KEY_AUTO = "bypass_auto";
+    static final String KEY_THRESHOLD = "bypass_threshold";
+    /** The mode the main switch brings back when turned on again. */
+    static final String KEY_LAST_MODE = "bypass_last_mode";
+    static final String MODE_AUTO = "auto";
+    static final String MODE_NOW = "now";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,11 +50,13 @@ public class BypassChargingActivity extends CollapsingToolbarBaseActivity {
         // Battery at or below this is drawn in the error colour while on battery.
         private static final int LOW_LEVEL = 15;
 
-        private BypassSwitchPreference mBypassNow;
-        private BypassSwitchPreference mBypassAuto;
-        private BypassLevelPreference mThreshold;
         private BypassStatusPreference mStatus;
+        private BypassMainSwitchPreference mMain;
+        private BypassModePreference mModeLimit;
+        private BypassModePreference mModeHold;
+        private BypassLevelPreference mThreshold;
         private Intent mLastBattery;
+        private boolean mFirstShow;
 
         // Keeps the status card live while the page is open.
         private final BroadcastReceiver mBatteryReceiver = new BroadcastReceiver() {
@@ -49,21 +69,38 @@ public class BypassChargingActivity extends CollapsingToolbarBaseActivity {
 
         @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
-            getPreferenceManager().setStorageDeviceProtected();
+            final PreferenceManager manager = getPreferenceManager();
+            manager.setStorageDeviceProtected();
+            // Lets the list animate the limit slider in and out when the mode changes.
+            manager.setPreferenceComparisonCallback(
+                    new PreferenceManager.SimplePreferenceComparisonCallback());
             setPreferencesFromResource(R.xml.bypass_settings, rootKey);
+            mFirstShow = savedInstanceState == null;
 
-            mBypassNow = findPreference("bypass_now");
-            mBypassAuto = findPreference("bypass_auto");
-            mThreshold = findPreference("bypass_threshold");
             mStatus = findPreference("bypass_status");
+            mMain = findPreference("bypass_main");
+            mModeLimit = findPreference("bypass_mode_limit");
+            mModeHold = findPreference("bypass_mode_hold");
+            mThreshold = findPreference(KEY_THRESHOLD);
 
-            // The three rows share one rounded card.
-            if (mBypassNow != null) mBypassNow.setGroupPosition(KiwiStyle.GROUP_TOP);
-            if (mBypassAuto != null) mBypassAuto.setGroupPosition(KiwiStyle.GROUP_MIDDLE);
-            if (mThreshold != null) mThreshold.setGroupPosition(KiwiStyle.GROUP_BOTTOM);
+            // Limit, its slider (only while Limit is picked) and Hold share one card.
+            mModeLimit.setGroupPosition(KiwiStyle.GROUP_TOP);
+            mThreshold.setGroupPosition(KiwiStyle.GROUP_MIDDLE);
+            mModeHold.setGroupPosition(KiwiStyle.GROUP_BOTTOM);
 
-            updateThresholdTitle();
-            updateInterlock();
+            mMain.setOnPreferenceChangeListener((p, value) -> {
+                setOn((Boolean) value);
+                return true;
+            });
+            mModeLimit.setOnPreferenceClickListener(p -> {
+                selectMode(MODE_AUTO);
+                return true;
+            });
+            mModeHold.setOnPreferenceClickListener(p -> {
+                selectMode(MODE_NOW);
+                return true;
+            });
+            updateControls();
         }
 
         @Override
@@ -71,13 +108,59 @@ public class BypassChargingActivity extends CollapsingToolbarBaseActivity {
             super.onViewCreated(view, savedInstanceState);
             // The rounded rows and the gaps between them separate items; no dividers.
             setDivider(null);
+            KiwiPage.setUpList(getListView(), mFirstShow);
         }
 
-        private void updateThresholdTitle() {
-            if (mThreshold == null) return;
-            // The value sits under the title instead of inside it.
-            mThreshold.setSummary(getString(R.string.bypass_threshold_summary,
-                    mThreshold.getValue()));
+        private SharedPreferences prefs() {
+            return getPreferenceManager().getSharedPreferences();
+        }
+
+        /** Main switch: off clears both modes; on brings back the mode used last. */
+        private void setOn(boolean on) {
+            final SharedPreferences p = prefs();
+            if (on) {
+                final boolean now = MODE_NOW.equals(p.getString(KEY_LAST_MODE, MODE_AUTO));
+                p.edit().putBoolean(KEY_NOW, now).putBoolean(KEY_AUTO, !now).apply();
+            } else {
+                p.edit().putBoolean(KEY_NOW, false).putBoolean(KEY_AUTO, false).apply();
+            }
+            applyNow();
+        }
+
+        private void selectMode(String mode) {
+            final boolean now = MODE_NOW.equals(mode);
+            prefs().edit().putString(KEY_LAST_MODE, mode)
+                    .putBoolean(KEY_NOW, now).putBoolean(KEY_AUTO, !now).apply();
+            applyNow();
+        }
+
+        /** BypassService applies the settings as soon as it is started. */
+        private void applyNow() {
+            requireContext().startService(new Intent(requireContext(), BypassService.class));
+        }
+
+        private String currentMode(SharedPreferences p) {
+            if (p.getBoolean(KEY_NOW, false)) return MODE_NOW;
+            if (p.getBoolean(KEY_AUTO, false)) return MODE_AUTO;
+            return p.getString(KEY_LAST_MODE, MODE_AUTO);
+        }
+
+        private void updateControls() {
+            final SharedPreferences p = prefs();
+            final boolean on = p.getBoolean(KEY_NOW, false) || p.getBoolean(KEY_AUTO, false);
+            final String mode = currentMode(p);
+            final int threshold = p.getInt(KEY_THRESHOLD, 80);
+
+            mMain.setChecked(on);
+            mModeLimit.setChecked(MODE_AUTO.equals(mode));
+            mModeHold.setChecked(MODE_NOW.equals(mode));
+            // Like Pixel: the options stay visible but greyed out while switched off.
+            mModeLimit.setEnabled(on);
+            mModeHold.setEnabled(on);
+            mModeLimit.setTitle(getString(R.string.bypass_limit_title, threshold));
+            mThreshold.setSummary(getString(R.string.bypass_threshold_summary, threshold));
+            // The slider belongs to Limit: it slides in under it only when Limit is in use.
+            mThreshold.setVisible(on && MODE_AUTO.equals(mode));
         }
 
         /**
@@ -86,10 +169,10 @@ public class BypassChargingActivity extends CollapsingToolbarBaseActivity {
          */
         private void updateStatus() {
             if (mStatus == null || mLastBattery == null) return;
-            final SharedPreferences prefs = getPreferenceManager().getSharedPreferences();
-            final boolean now = prefs.getBoolean("bypass_now", false);
-            final boolean auto = prefs.getBoolean("bypass_auto", false);
-            final int threshold = prefs.getInt("bypass_threshold", 80);
+            final SharedPreferences prefs = prefs();
+            final boolean now = prefs.getBoolean(KEY_NOW, false);
+            final boolean auto = prefs.getBoolean(KEY_AUTO, false);
+            final int threshold = prefs.getInt(KEY_THRESHOLD, 80);
 
             final int level = mLastBattery.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
             final int scale = mLastBattery.getIntExtra(BatteryManager.EXTRA_SCALE, 100);
@@ -137,7 +220,7 @@ public class BypassChargingActivity extends CollapsingToolbarBaseActivity {
                 mStatus.setStatus(state, pct, false, getString(chip), title,
                         getString(R.string.bypass_status_charging_to, threshold));
             } else if (now || auto) {
-                // A mode is on but the service applies it with the next battery update.
+                // A mode is on; the battery reports the change with its next update.
                 mStatus.setStatus(state, pct, false,
                         getString(R.string.bypass_chip_starting),
                         getString(R.string.bypass_status_pending_title),
@@ -148,50 +231,30 @@ public class BypassChargingActivity extends CollapsingToolbarBaseActivity {
             }
         }
 
-        /**
-         * The two modes are mutually exclusive: whichever is on greys out the other.
-         * The level slider belongs to auto bypass, so it follows "bypass now".
-         */
-        private void updateInterlock() {
-            if (mBypassNow == null || mBypassAuto == null || mThreshold == null) return;
-            final boolean now = mBypassNow.isChecked();
-            final boolean auto = mBypassAuto.isChecked();
-            mBypassAuto.setEnabled(!now);
-            mBypassNow.setEnabled(!auto);
-            mThreshold.setEnabled(!now);
-        }
-
         @Override
         public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
-            if ("bypass_threshold".equals(key)) {
-                updateThresholdTitle();
-            }
-            updateInterlock();
+            updateControls();
             updateStatus();
         }
 
         @Override
         public void onResume() {
             super.onResume();
-            getPreferenceManager().getSharedPreferences()
-                    .registerOnSharedPreferenceChangeListener(this);
+            prefs().registerOnSharedPreferenceChangeListener(this);
             final Intent sticky = requireContext().registerReceiver(mBatteryReceiver,
                     new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
             if (sticky != null) mLastBattery = sticky;
-            updateThresholdTitle();
-            updateInterlock();
+            updateControls();
             updateStatus();
         }
 
         @Override
         public void onPause() {
             super.onPause();
-            getPreferenceManager().getSharedPreferences()
-                    .unregisterOnSharedPreferenceChangeListener(this);
+            prefs().unregisterOnSharedPreferenceChangeListener(this);
             requireContext().unregisterReceiver(mBatteryReceiver);
-            // Re-evaluate immediately with the new settings
-            requireContext().startService(
-                    new Intent(requireContext(), BypassService.class));
+            // Re-evaluate with the final settings (the slider writes as it moves).
+            applyNow();
         }
     }
 }

@@ -8,6 +8,8 @@ android_app {
     privileged: false,
     static_libs: [
         "androidx.preference_preference",
+        // RecyclerView / SimpleItemAnimator for the list animations (KiwiPage).
+        "androidx.recyclerview_recyclerview",
         "SettingsLibCollapsingToolbarBaseActivity",
         "SettingsLibSettingsTheme",
         "SettingsLibTopIntroPreference",

@@ -83,6 +83,10 @@ public class BypassService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        // The Charging optimization page starts the service on every change, so apply the
+        // new settings now instead of waiting for the next battery update.
+        Intent sticky = registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+        if (sticky != null) evaluate(sticky);
         return START_STICKY;
     }
 

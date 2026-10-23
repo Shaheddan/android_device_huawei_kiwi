@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Android 14 Material You layout: intro, the animated status card, the modes as one
-     group of rounded rows, and a footer. Keys and storage are unchanged, so
-     BypassService behaves exactly as before. -->
+<!-- Charging optimization, Android 15 layout: intro, the animated status card, the main
+     switch, then the two modes as radio rows sharing one card (the limit slider appears
+     under "Limit to" when that mode is in use), and a footer. The page writes the same
+     keys as before (bypass_now, bypass_auto, bypass_threshold), so BypassService reads
+     them unchanged. -->
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
@@ -12,35 +14,28 @@
     <org.lineageos.settings.kiwi.BypassStatusPreference
         android:key="bypass_status" />
 
-    <PreferenceCategory
-        android:key="bypass_mode"
-        android:title="@string/bypass_mode_category">
+    <org.lineageos.settings.kiwi.BypassMainSwitchPreference
+        android:key="bypass_main"
+        android:title="@string/bypass_main_title" />
 
-        <org.lineageos.settings.kiwi.BypassSwitchPreference
-            android:key="bypass_now"
-            android:icon="@drawable/ic_bypass_plug"
-            android:title="@string/bypass_now_title"
-            android:summary="@string/bypass_now_summary"
-            android:defaultValue="false" />
+    <org.lineageos.settings.kiwi.BypassModePreference
+        android:key="bypass_mode_limit"
+        android:title="@string/bypass_limit_title"
+        android:summary="@string/bypass_limit_summary" />
 
-        <org.lineageos.settings.kiwi.BypassSwitchPreference
-            android:key="bypass_auto"
-            android:icon="@drawable/ic_mode_auto"
-            android:title="@string/bypass_auto_title"
-            android:summary="@string/bypass_auto_summary"
-            android:defaultValue="false" />
+    <org.lineageos.settings.kiwi.BypassLevelPreference
+        android:key="bypass_threshold"
+        android:title="@string/bypass_threshold_title"
+        android:max="100"
+        app:min="10"
+        android:defaultValue="80"
+        app:showSeekBarValue="false"
+        app:updatesContinuously="true" />
 
-        <org.lineageos.settings.kiwi.BypassLevelPreference
-            android:key="bypass_threshold"
-            android:icon="@drawable/ic_mode_level"
-            android:title="@string/bypass_threshold_title"
-            android:max="100"
-            app:min="10"
-            android:defaultValue="80"
-            app:showSeekBarValue="false"
-            app:updatesContinuously="true" />
-
-    </PreferenceCategory>
+    <org.lineageos.settings.kiwi.BypassModePreference
+        android:key="bypass_mode_hold"
+        android:title="@string/bypass_hold_title"
+        android:summary="@string/bypass_hold_summary" />
 
     <com.android.settingslib.widget.FooterPreference
         android:key="footer_preference"

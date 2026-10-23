@@ -17,5 +17,13 @@ public class BootReceiver extends BroadcastReceiver {
             BypassService.writeNode("1");
             context.startService(new Intent(context, BypassService.class));
         }
+
+        // Battery health: read the kernel's cycle count on every boot and plug event. The
+        // count can only be cleared at boot, so reading it on every boot is what lets
+        // BatteryHealth keep the total across a reset.
+        BatteryHealth.update(context, BatteryHealth.stickyBattery(context));
+        if (Intent.ACTION_BOOT_COMPLETED.equals(action)) {
+            HealthSummaryProvider.notifyChanged(context);
+        }
     }
 }

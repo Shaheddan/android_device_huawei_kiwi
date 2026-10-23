@@ -1,17 +1,91 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="kiwi_parts_title">Kiwi Parts</string>
-    <string name="bypass_title">Bypass charging</string>
-    <string name="bypass_summary">Power the phone from the charger while holding the battery level</string>
-    <string name="bypass_now_title">Bypass now</string>
-    <string name="bypass_now_summary">Stop charging immediately and run from the charger, holding the current battery level</string>
-    <string name="bypass_auto_title">Auto bypass</string>
-    <string name="bypass_auto_summary">Charge normally up to the level below, then hold there</string>
-    <string name="bypass_threshold_title">Auto bypass level</string>
 
-    <!-- Page layout -->
+    <!-- Accessibility states -->
+    <string name="kiwi_state_expanded">Expanded</string>
+    <string name="kiwi_state_collapsed">Collapsed</string>
+    <string name="kiwi_state_selected">Selected</string>
+    <string name="kiwi_state_not_selected">Not selected</string>
+
+    <!-- ==== Battery health (Settings > Battery > Battery health) ==== -->
+    <string name="health_title">Battery health</string>
+    <string name="health_intro">View battery health status and tips to extend your battery\'s lifespan</string>
+    <string name="health_status_normal">Normal</string>
+    <string name="health_status_reduced">Reduced</string>
+    <string name="health_status_unknown">Not set up</string>
+    <string name="health_status_reduced_detail">Your battery holds noticeably less charge than when it was new. Replacing it would restore battery life.</string>
+    <string name="health_status_unknown_detail">Add the battery\'s history under Battery capacity to see its health.</string>
+    <string name="health_badge_description">Battery health: %1$s</string>
+    <string name="health_footer">Batteries degrade over time and last fewer hours between charges.</string>
+
+    <!-- Battery capacity card -->
+    <string name="capacity_title">Battery capacity</string>
+    <string name="capacity_value">%1$d%%</string>
+    <string name="capacity_not_set">Not set up</string>
+    <string name="capacity_body">This is an estimated percentage of charge the battery can currently hold compared to when it was new.</string>
+    <string name="capacity_decrease">Battery capacity decreases over time.</string>
+    <string name="capacity_threshold">Replacing the battery is recommended below %1$d%%</string>
+    <string name="capacity_cycles_label">Charge cycles</string>
+    <string name="capacity_cycles_about">About %1$s</string>
+    <string name="capacity_cycles_counted">%1$s counted by this phone since %2$s</string>
+    <string name="capacity_cycles_not_counted">Estimated from how the phone was used</string>
+    <string name="capacity_age_label">Battery age</string>
+    <string name="capacity_now_label">Capacity now</string>
+    <string name="capacity_now_value">About %1$s of %2$s mAh</string>
+    <string name="capacity_how">This phone can\'t measure its battery\'s capacity directly. It estimates it from the charge cycles it counts and the battery\'s age.</string>
+    <string name="capacity_setup_body">This phone can\'t measure its battery\'s capacity directly, so it estimates it from the charge cycles it counts and the battery\'s age. Tell it when the battery was new to see the estimate.</string>
+    <string name="capacity_setup">Set up</string>
+    <string name="capacity_edit">Edit battery history</string>
+
+    <string name="age_less_than_month">Less than a month</string>
+    <string name="age_years_months">%1$s, %2$s</string>
+    <plurals name="age_years">
+        <item quantity="one">%d year</item>
+        <item quantity="other">%d years</item>
+    </plurals>
+    <plurals name="age_months">
+        <item quantity="one">%d month</item>
+        <item quantity="other">%d months</item>
+    </plurals>
+
+    <!-- Battery history dialog -->
+    <string name="history_title">Battery history</string>
+    <string name="history_when">When was this battery new?</string>
+    <string name="history_when_hint">The month you got the phone, or when its battery was last replaced.</string>
+    <string name="history_usage">How often was it charged until now?</string>
+    <string name="history_usage_hint">Used only for the time before this phone started counting charge cycles itself.</string>
+    <string name="usage_daily">Every day</string>
+    <string name="usage_often">Every few days</string>
+    <string name="usage_rarely">Rarely, as a spare phone</string>
+    <string name="history_save">Save</string>
+
+    <!-- Battery health tips card -->
+    <string name="tips_title">Battery health tips</string>
+    <string name="tip_heat_title">Keep it cool</string>
+    <string name="tip_heat_body">Heat wears a battery fastest. Use and charge the phone between 0 and 35 °C, and avoid charging it somewhere hot, like a car in the sun or under a pillow.</string>
+    <string name="tip_full_title">Don\'t keep it full</string>
+    <string name="tip_full_body">Hours at full charge age the battery. Charging optimization can hold it at a lower level while the phone stays plugged in.</string>
+    <string name="tip_storage_title">Store it half charged</string>
+    <string name="tip_storage_body">If you won\'t use the phone for weeks, leave the battery about half charged and turn the phone off. Top it up every few months so it never drains completely.</string>
+    <string name="tip_drain_title">Use less power every day</string>
+    <string name="tip_drain_body">Lower brightness, a shorter screen timeout and Battery Saver mean fewer charge cycles, which slows wear. Try not to run the battery all the way down.</string>
+
+    <!-- Charging optimization row -->
+    <string name="optimization_title">Charging optimization</string>
+    <string name="optimization_off">Off</string>
+    <string name="optimization_limit">Limit to %1$d%%</string>
+    <string name="optimization_hold">Hold current level</string>
+
+    <!-- ==== Charging optimization page (bypass charging) ==== -->
     <string name="bypass_intro">Run the phone straight from the charger instead of charging the battery, so it isn\'t kept at a high charge while plugged in.</string>
-    <string name="bypass_mode_category">Mode</string>
+    <string name="bypass_main_title">Use bypass charging</string>
+    <string name="bypass_limit_title">Limit to %1$d%%</string>
+    <string name="bypass_limit_summary">Charge normally up to the limit, then run the phone from the charger</string>
+    <string name="bypass_hold_title">Hold current level</string>
+    <string name="bypass_hold_summary">Stop charging now and run the phone from the charger</string>
+    <string name="bypass_threshold_title">Charging limit</string>
+    <string name="bypass_threshold_summary">Charge up to %1$d%%, then hold</string>
     <string name="bypass_footer">While bypass is active, the charger powers the phone and the battery stays at its level, which reduces heat and battery wear. Normal charging always returns when you unplug the charger.</string>
     <string name="bypass_level">%1$d%%</string>
 
@@ -28,12 +102,11 @@
     <string name="bypass_status_pending_title">Starting bypass…</string>
     <string name="bypass_status_pending_summary">Takes effect with the next battery update</string>
 
-    <!-- Status chip on the card (Android 14 layout) -->
+    <!-- Status chip on the card -->
     <string name="bypass_chip_battery">On battery</string>
     <string name="bypass_chip_charging">Charging</string>
     <string name="bypass_chip_plugged">Plugged in</string>
     <string name="bypass_chip_full">Full</string>
     <string name="bypass_chip_bypass">Bypass active</string>
     <string name="bypass_chip_starting">Starting</string>
-    <string name="bypass_threshold_summary">Hold the battery at %1$d%%</string>
 </resources>
