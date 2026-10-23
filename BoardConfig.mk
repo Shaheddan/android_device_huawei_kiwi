@@ -31,6 +31,12 @@ TARGET_BOOTLOADER_BOARD_NAME := MSM8916
 TARGET_NO_BOOTLOADER := true
 TARGET_OTA_ASSERT_DEVICE := kiwi
 
+# OTA
+# WHY stated explicitly: kiwi has no A/B slots. The s2 LineageOS 22.1 tree sets this
+# ("Use deprecated non_ab OTA") for the same layout; where false is already the
+# default it changes nothing.
+AB_OTA_UPDATER := false
+
 # Kernel
 BOARD_KERNEL_BASE := 0x80000000
 BOARD_KERNEL_CMDLINE := androidboot.hardware=qcom ehci-hcd.park=3 androidboot.bootdevice=7824900.sdhci lpm_levels.sleep_disabled=1
