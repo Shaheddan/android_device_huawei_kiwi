@@ -1,0 +1,45 @@
+From 1c03187c2d706779dbb440c5aa78e5ca1850b29b Mon Sep 17 00:00:00 2001
+From: shahed <jamshidalinezhadian@gmail.com>
+Date: Sun, 25 Oct 2026 13:51:31 +0330
+Subject: [PATCH] BoardConfigQcom: set the display headers namespace only on UM
+ platforms
+
+LineageOS 22.2 sets qtidisplay headers_namespace for every non-QSSI qcom
+board, so SurfaceFlinger pulls
+//hardware/qcom-caf/msm8916/display:display_intf_headers on kiwi. kiwi's
+msm8916 display HAL (lineage-19.0-caf-msm8916) is Make-only and defines
+no such module, and soong_build fails:
+
+  "surfaceflinger" depends on undefined module
+  "//hardware/qcom-caf/msm8916/display:display_intf_headers"
+
+LineageOS 21 declared the variable only for UM platforms ("to avoid
+breaking build for all other platforms"), so kiwi's SurfaceFlinger
+built without QCOM_UM_FAMILY. Restore that condition. SurfaceFlinger is
+the only user of the variable and falls back to its default branch.
+
+Change-Id: I6b1d3c0e9a4f7d2b8e5c1a7f3d9b2e6c4a8f0d15
+---
+ BoardConfigQcom.mk | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/BoardConfigQcom.mk b/BoardConfigQcom.mk
+index 4aa2d01..b44988f 100644
+--- a/BoardConfigQcom.mk
++++ b/BoardConfigQcom.mk
+@@ -359,7 +359,11 @@ ifneq ($(filter $(QSSI_SUPPORTED_PLATFORMS),$(TARGET_BOARD_PLATFORM)),)
+             vendor/qcom/opensource/display
+     endif
+     $(call soong_config_set,qtidisplay,headers_namespace,vendor/qcom/opensource/commonsys-intf/display)
+-else
++else ifneq ($(filter $(UM_PLATFORMS),$(TARGET_BOARD_PLATFORM)),)
++    # kiwi: only UM platforms get the display headers namespace, as in LineageOS 21
++    # (vendor/lineage BoardConfigSoong.mk). kiwi's msm8916 display HAL is Make-only
++    # and has no display_intf_headers module, so SurfaceFlinger must build without
++    # QCOM_UM_FAMILY, exactly as it did for kiwi on 21.
+     $(call soong_config_set,qtidisplay,headers_namespace,$(QCOM_SOONG_NAMESPACE)/display)
+ endif
+ 
+-- 
+2.43.0
+
