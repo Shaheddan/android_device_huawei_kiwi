@@ -1,0 +1,49 @@
+From 5a0af52ddb1e7b2870a1a40a5af1164ec1dbe3f9 Mon Sep 17 00:00:00 2001
+From: shahed <jamshidalinezhadian@gmail.com>
+Date: Mon, 26 Oct 2026 22:49:45 +0330
+Subject: [PATCH] generic: take cameraserver from the 32-bit side for kiwi
+
+kiwi builds cameraserver 32-bit only (compile_multilib "32"), because
+its HALv1 camera shares video buffer metadata with the 32-bit camera
+HAL and media codecs. aosp_shared_system_image listed cameraserver
+among its plain deps, which resolve to the 64-bit variant, so
+soong_build failed:
+
+  dependency "cameraserver" of "aosp_shared_system_image" missing
+  variant: os:android,arch:arm64_armv8-a_cortex-a53
+
+List it under prefer32 next to mediaserver and drmserver, which takes
+the 32-bit variant. kiwi's system image is built by make, so this only
+keeps Soong's analysis of the generic image consistent.
+
+Change-Id: I3f8a2c7d1e9b4a6f0c5d8e2b7a1f4c9d6e3b0a28
+---
+ target/product/generic/Android.bp | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/target/product/generic/Android.bp b/target/product/generic/Android.bp
+index 3057137..99f0919 100644
+--- a/target/product/generic/Android.bp
++++ b/target/product/generic/Android.bp
+@@ -536,7 +536,6 @@ system_image_defaults {
+         "bu",
+         "bugreport",
+         "bugreportz",
+-        "cameraserver",
+         "cgroups.json",
+         "cmd",
+         "content",
+@@ -889,6 +888,10 @@ system_image_defaults {
+         },
+         prefer32: {
+             deps: [
++                // kiwi builds cameraserver 32-bit only (its HALv1 video buffers are shared
++                // with the 32-bit camera HAL and media codecs). prefer32 takes its 32-bit
++                // variant there and still the 64-bit one where only that exists.
++                "cameraserver", // handheld_system
+                 "drmserver", // media_system
+                 "mediaserver", // base_system
+             ],
+-- 
+2.43.0
+
