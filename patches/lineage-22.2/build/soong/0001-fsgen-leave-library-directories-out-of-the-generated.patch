@@ -1,0 +1,62 @@
+From e18ff33aee7b394eb09f97ad18c7297d27a9bb6f Mon Sep 17 00:00:00 2001
+From: shahed <jamshidalinezhadian@gmail.com>
+Date: Wed, 28 Oct 2026 07:28:02 +0330
+Subject: [PATCH] fsgen: leave library directories out of the generated
+ filesystems
+
+kiwi's proprietary libraries still ship through PRODUCT_COPY_FILES.
+fsgen turns copy files under lib and lib64 into
+prebuilt_renderscript_bitcode modules, which install per arch, so the
+vendor/lib and vendor/lib64 copies of each library land on the same
+path in the 64-bit variant and soong_build fails:
+
+  module "lineage_kiwi_generated_system_image" ...: packaging conflict
+  at vendor/lib64/libC2D2.so
+
+(177 libraries.) The generated filesystems only feed the
+soong_generated_*_filesystem_test diff targets; kiwi's real images are
+built by make from PRODUCT_COPY_FILES. Skip lib and lib64 directories
+(except lib/rfsa, which has its own module type) when generating the
+copy-file modules.
+
+Change-Id: I8d2e5b1a7c4f9e3d0b6a2c8f5e1d7b4a9c3f6e02
+---
+ fsgen/prebuilt_etc_modules_gen.go | 21 +++++++++++++++++++++
+ 1 file changed, 21 insertions(+)
+
+diff --git a/fsgen/prebuilt_etc_modules_gen.go b/fsgen/prebuilt_etc_modules_gen.go
+index e4bb07c..b4dd8b6 100644
+--- a/fsgen/prebuilt_etc_modules_gen.go
++++ b/fsgen/prebuilt_etc_modules_gen.go
+@@ -289,7 +289,28 @@ func prebuiltEtcModuleProps(ctx android.LoadHookContext, moduleName, partition,
+ 	return moduleProps
+ }
+ 
++// isLibraryInstallDir reports whether destDir is a lib or lib64 directory (or below one) other
++// than lib/rfsa, which has its own module type.
++func isLibraryInstallDir(destDir string) bool {
++	for _, lib := range []string{"lib", "lib64"} {
++		if destDir == lib || strings.HasPrefix(destDir, lib+"/") {
++			return destDir != "lib/rfsa" && !strings.HasPrefix(destDir, "lib/rfsa/")
++		}
++	}
++	return false
++}
++
+ func createPrebuiltEtcModulesInDirectory(ctx android.LoadHookContext, partition, srcDir, destDir string, destFiles []srcBaseFileInstallBaseFileTuple) (moduleNames []string) {
++	// kiwi: its proprietary libraries still ship through PRODUCT_COPY_FILES. lib and lib64
++	// map to prebuilt_renderscript_bitcode, which installs per arch, so the vendor/lib and
++	// vendor/lib64 copies of a library land on the same path in the 64-bit variant and the
++	// generated filesystem fails with a packaging conflict. The generated filesystems only
++	// feed the soong_generated_*_filesystem_test diff targets; kiwi's real images are built
++	// by make from PRODUCT_COPY_FILES. So leave library directories out of them.
++	if isLibraryInstallDir(destDir) {
++		return nil
++	}
++
+ 	groupedDestFiles, maxLen := groupDestFilesBySrc(destFiles)
+ 
+ 	// Find out the most appropriate module type to generate
+-- 
+2.43.0
+
