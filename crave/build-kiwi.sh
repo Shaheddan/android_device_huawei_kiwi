@@ -1,7 +1,7 @@
 #!/bin/bash
 # Build LineageOS 18.1 for kiwi (Honor 5X) on a Crave build node.
 # Start it from a local folder set up for Crave's LineageOS 18.1 project:
-#   repo init -u https://github.com/accupara/los18.1.git -b lineage-18.1 --git-lfs
+#   repo init -u https://github.com/accupara/los18.1.git -b lineage-18.1 --git-lfs --depth=1
 #   crave run --no-patch -- "curl -sfL https://raw.githubusercontent.com/Shaheddan/android_device_huawei_kiwi/lineage-18.1/crave/build-kiwi.sh | GH_TOKEN=... bash"
 # WHY each step:
 #  - the job runs in Crave's LOS 18.1 workspace but re-initialises it to LineageOS's own
@@ -18,7 +18,9 @@ VARIANT=${VARIANT:-userdebug}
 BRANCH=lineage-18.1
 RAW=https://raw.githubusercontent.com/Shaheddan/android_device_huawei_kiwi/$BRANCH
 
-repo init -u https://github.com/LineageOS/android.git -b lineage-18.1 --git-lfs \
+# --depth=1: Crave's admins require shallow checkouts on their nodes. The build needs no
+# git history: patches go in with git am on top of the checked-out tips.
+repo init -u https://github.com/LineageOS/android.git -b lineage-18.1 --git-lfs --depth=1 \
   || { echo "!! repo init failed"; exit 1; }
 
 rm -rf .repo/local_manifests && mkdir -p .repo/local_manifests || exit 1
