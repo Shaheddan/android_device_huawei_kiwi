@@ -1,7 +1,7 @@
 #!/bin/bash
 # Build LineageOS 20 for kiwi (Honor 5X) on a Crave build node.
 # Start it from a local folder set up for Crave's LOS 20 (project 36) project:
-#   repo init -u https://github.com/accupara/los20.git -b lineage-20.0 --git-lfs
+#   repo init -u https://github.com/accupara/los20.git -b lineage-20.0 --git-lfs --depth=1
 #   crave run --no-patch -- "curl -sfL https://raw.githubusercontent.com/Shaheddan/android_device_huawei_kiwi/lineage-20/crave/build-kiwi.sh | GH_TOKEN=... bash"
 # WHY each step:
 #  - LineageOS's own lineage-20.0 manifest (the one kiwi's 20 was built on), in the LOS 20
@@ -17,7 +17,9 @@ VARIANT=${VARIANT:-userdebug}
 BRANCH=lineage-20
 RAW=https://raw.githubusercontent.com/Shaheddan/android_device_huawei_kiwi/$BRANCH
 
-repo init -u https://github.com/LineageOS/android.git -b lineage-20.0 --git-lfs -g default,-pixel-extra \
+# --depth=1: Crave's admins require shallow checkouts on their nodes. The build needs no
+# git history: patches go in with git am on top of the checked-out tips.
+repo init -u https://github.com/LineageOS/android.git -b lineage-20.0 --git-lfs --depth=1 -g default,-pixel-extra \
   || { echo "!! repo init failed"; exit 1; }
 
 rm -rf .repo/local_manifests && mkdir -p .repo/local_manifests || exit 1
