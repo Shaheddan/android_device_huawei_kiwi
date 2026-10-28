@@ -19,7 +19,9 @@ RAW=https://raw.githubusercontent.com/Shaheddan/android_device_huawei_kiwi/linea
 # own manifest (AOSP tag android-15.0.0_r32). UNTESTED on Crave so far: if resync.sh
 # rejects a non-accupara manifest, the first job shows it here.
 # -pixel-extra: same group filter as the local tree, keeps Pixel repos out.
-repo init -u https://github.com/LineageOS/android.git -b lineage-22.2 --git-lfs -g default,-pixel-extra \
+# --depth=1: Crave's admins require shallow checkouts on their nodes. The build needs no
+# git history: patches go in with git am on top of the checked-out tips.
+repo init -u https://github.com/LineageOS/android.git -b lineage-22.2 --git-lfs --depth=1 -g default,-pixel-extra \
   || { echo "!! repo init failed"; exit 1; }
 
 rm -rf .repo/local_manifests && mkdir -p .repo/local_manifests || exit 1
