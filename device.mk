@@ -298,7 +298,8 @@ PRODUCT_SOONG_NAMESPACES += \
     device/huawei/kiwi/init \
     device/huawei/kiwi/libshims \
     device/huawei/kiwi/libwcnss_qmi \
-    device/huawei/kiwi/light
+    device/huawei/kiwi/light \
+    hardware/qcom-caf/bt/libbt-vendor
 
 # Thermal
 PRODUCT_COPY_FILES += \
