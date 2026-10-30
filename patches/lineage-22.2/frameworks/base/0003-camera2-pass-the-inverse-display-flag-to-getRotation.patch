@@ -1,0 +1,42 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: shahed <jamshidalinezhadian@gmail.com>
+Date: Fri, 30 Oct 2026 12:40:00 +0330
+Subject: [PATCH] camera2: pass the inverse-display flag to
+ getRotationTransform
+
+Android 15 added a bool enableTransformInverseDisplay parameter to
+CameraUtils::getRotationTransform(); the legacy shim's JNI still made
+the three-argument call and libandroid_runtime failed to compile:
+
+  error: too few arguments to function call, expected 4, have 3
+
+Camera2Client and Camera3Device pass true unless the desktop-windowing
+rotation override is set, which the legacy shim never uses. Pass true,
+which keeps the Android 14 behaviour (the flag was always set there).
+
+Change-Id: I7c2e5a9d4b1f8e3a6c0d2b5f9e8a7c4d1b3e6f20
+---
+ .../android_hardware_camera2_legacy_LegacyCameraDevice.cpp  | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/core/jni/android_hardware_camera2_legacy_LegacyCameraDevice.cpp b/core/jni/android_hardware_camera2_legacy_LegacyCameraDevice.cpp
+index 0de5e0f..f5990dc 100644
+--- a/core/jni/android_hardware_camera2_legacy_LegacyCameraDevice.cpp
++++ b/core/jni/android_hardware_camera2_legacy_LegacyCameraDevice.cpp
+@@ -721,8 +721,12 @@ static jint LegacyCameraDevice_nativeSetSurfaceOrientation(JNIEnv* env, jobject
+ 
+     int32_t transform = 0;
+ 
++    // Android 15 made the inverse-display flag a parameter. Camera2Client and Camera3Device
++    // default it to true and clear it only for the desktop-windowing rotation override,
++    // which the legacy shim never uses; true keeps the see-through preview of Android 14.
+     if ((err = CameraUtils::getRotationTransform(staticMetadata,
+-            /*mirrorMode: MIRROR_MODE_AUTO*/ 0, /*out*/&transform)) != NO_ERROR) {
++            /*mirrorMode: MIRROR_MODE_AUTO*/ 0, /*enableTransformInverseDisplay*/ true,
++            /*out*/&transform)) != NO_ERROR) {
+         ALOGE("%s: Invalid rotation transform %s (%d)", __FUNCTION__, strerror(-err),
+                 err);
+         return err;
+-- 
+2.43.0
+
